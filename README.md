@@ -1,5 +1,5 @@
-# CAMELFORTH FOR THE MSP430 - VERSION 0.2 - 9 JANUARY 2009  
-adopted for MSP430FR5739 by M.Kalus july & december 2011  
+# CamelForth for the MSP430 - Version 0.2 - 9 January 2009  
+Adopted for MSP430FR5739 by M.Kalus july & december 2011  
 (You will find me at www.forth-ev.de) 
 
 This is an ALPHA TEST version of CF430FRexp, an ANSI Standard* Forth for the Texas Instruments MSP430 FRAM family of microprocessors. This means that I have tested the bulk of this code for correct functioning, but you may still discover bugs. 
@@ -46,19 +46,13 @@ CF430FR features direct-to-FRAM compilation, it behaves just like compiling into
 I assume that you have already installed the IAR MSP430 Workbench.
 
 1. Create a new working directory.  For this example, "cf430fr".
-
 2. Extract the files from cf430fr-02.zip into the new directory.
-
 3. Launch the MSP430 Workbench. In the Embedded Workbench Startup window, click "Create new project in current workspace."  
 (If you allready have IAR running do this: In Menue klick "File/New/Workspace" and start a new project there.)
-
 4. In the Create New Project window, select the "asm" template (double-click "asm" and then click the "asm" that appears, then click OK).
-
 5. In the Save As window, you will need to specify a directory and a Project file name.  Navigate to the directory you created in step 1. For "File name:" you can type whatever you want -- for this example, "cf430fr-forth". Click Save.
-
 6. In the Workspace window, click on the Project name (e.g. "cf430fr-forth") to select it.  Then on the menu bar click Project, Add Files. In the Add Files window select core430FR.s43, infoA.s43, init430FR5739.s43 and vecs430FR5739.s43, then click Open.  
 Do NOT add deps430FR.s43, hilvl430FR.s43,expapps.s43, these are included from core430FR.
-
 7. On the menu bar, click Project, Options.  
 Select "General Options":  
 Select the "Target" tab there.  
@@ -69,7 +63,6 @@ Select the "Stack/Heap" tab there.
 Select the "Override default" box and " Read from linker command file".  
 (If you don't, you get Warning [2] while making CF430FR.)  
 Click OK.
-
 8. In the Options window, select "Linker", then the "Config" tab.  Under "Linker configuration file," select the "Override default" box.  Click the selection button to the right of the current file, browse to the project directory you created in step 1, select lnk430fr5739.xcl, and click Open. 
 Still in the Options Window, select "Debugger", then the "Setup" tab. 
 Under "Driver" seclect "FET Debugger". 
