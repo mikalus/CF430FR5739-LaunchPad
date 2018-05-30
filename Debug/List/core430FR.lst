@@ -1,0 +1,3285 @@
+###############################################################################
+#                                                                             #
+#     IAR Assembler V6.40.1.950/W32  for MSP430 31/May/2018  01:38:26         #
+#     Copyright 1996-2015 IAR Systems AB.                                     #
+#                                                                             #
+#           Target option =  MSP430X                                          #
+#           Source file   =  C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\core430FR.s43#
+#           List file     =  C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\Debug\List\core430FR.lst#
+#           Object file   =  C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\Debug\Obj\core430FR.r43#
+#           Command line  =  C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\core430FR.s43 #
+#                            -OC:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\Debug\Obj #
+#                            -s+ -M<> -w+                                     #
+#                            -LC:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\Debug\List #
+#                            -t8 -x -r -D__MSP430FR5739__ -v1 --data_model    #
+#                            small --code_model large                         #
+#                            -IC:\Program Files (x86)\IAR Systems\Embedded Workbench 7.3\430\INC\ #
+#                                                                             #
+###############################################################################
+
+      1    000000              ; Machine Language Primitives - MSP430FR5739   ,
+                                M. Kalus Juli 2011 
+      2    000000              ; Template was: core430f1611.s43 
+      3    000000              ; for TI MSP430F1611 by B. Rodriguez  3 Jan
+                                09
+      4    000000              
+      5    000000              ; ----------------------------------------------
+                               ------------------------
+      6    000000              ; CamelForth for the Texas Instruments MSP430
+                                FRAM Family. 
+      7    000000              ; (c) 2009 Bradford J. Rodriguez.
+      8    000000              ; 
+      9    000000              ; This program is free software; you can
+                                redistribute it and/or modify
+     10    000000              ; it under the terms of the GNU General Public
+                                License as published by
+     11    000000              ; the Free Software Foundation; either version 3
+                                of the License, or
+     12    000000              ; (at your option) any later version.
+     13    000000              ;
+     14    000000              ; This program is distributed in the hope that
+                                it will be useful,
+     15    000000              ; but WITHOUT ANY WARRANTY; without even the
+                                implied warranty of
+     16    000000              ; MERCHANTABILITY or FITNESS FOR A PARTICULAR
+                                PURPOSE.  See the
+     17    000000              ; GNU General Public License for more details.
+     18    000000              ;
+     19    000000              ; You should have received a copy of the GNU
+                                General Public License
+     20    000000              ; along with this program.  If not, see
+                                <http://www.gnu.org/licenses/>.
+     21    000000              ;
+     22    000000              ; Commercial inquiries should be directed to the
+                                author at 
+     23    000000              ; 115 First St., #105, Collingwood, Ontario L9Y
+                                4W3 Canada
+     24    000000              ; or via email to bj@camelforth.com
+     25    000000              
+     26    000000              ; ----------------------------------------------
+                               ------------------------
+     27    000000              ; REVISION HISTORY
+     28    000000              ; 22 jul 2011 - no need for FLERASE I! IC! I@
+                                IC@ D->I in FRAM MCUs.
+     29    000000              
+     30    000000              ; ----------------------------------------------
+                               ------------------------
+     31    000000              #include "msp430.h"                     ;
+                                #define controlled include file
+     32    000000              #include "CF430FRforth.h"               ; header
+                                macros & register defs
+     33    000000              
+     34    000000                      EXTERN  UP,UAREA,PADAREA,LSTACK,PSTACK,R
+ STACK
+     35    000000                      EXTERN  TIBAREA,RAMDICT,ROMDICT
+     36    000000                      EXTERN  TIB_SIZE,UAREA_SIZE,VECS_SIZE,nu
+                               llirq
+     37    000000              
+     38    000000                      RSEG    CODE                    ; place
+  program in 'CODE' segment
+     39    000000              
+     40    000000              link    SET 0           ; initial dictionary
+                                link
+     41    000000              
+     42    000000              ; ----------------------------------------------
+                               ------------------------
+     43    000000              
+     44    000000              CF430FRstart:
+     45    000000              
+     46    000000              ; INTERPRETER LOGIC
+     47    000000              ; ITC NEXT is defined as
+     48    000000              ;        MOV @IP+,W      ; 2 fetch word address
+                                into W
+     49    000000              ;        MOV @W+,PC      ; 2 fetch code address
+                                into PC, W=PFA
+     50    000000              
+     51    000000              ;C EXECUTE   i*x xt -- j*x   execute Forth
+                                word
+     52    000000              ;C                           at 'xt'
+     53    000000                      HEADER  EXECUTE,7,'EXECUTE',DOCODE
+     53.1  000000                      PUBLIC  EXECUTE
+     53.2  000000 0000                 DW      link
+     53.3  000002 FF                   DB      0FFh       ; not immediate
+     53.4  000003              link    SET     $
+     53.5  000003 07                   DB      7
+     53.6  000004 455845435554*        DB      'EXECUTE'
+     53.7  00000B 00                   EVEN
+     53.8  00000C                      IF      'DOCODE'='DOCODE'
+     53.9  00000C ....         EXECUTE: DW     $+2
+     53.10 00000E                      ELSE
+     53.11 00000E              EXECUTE: DW      DOCODE
+     53.12 00000E                      ENDIF
+     53.13 00000E                      ENDM
+     54    00000E 0647                 MOV TOS,W       ; 1 put word address
+                                                        into W
+     55    000010 3744                 MOV @PSP+,TOS   ; 2 fetch new TOS
+     56    000012 3046                 MOV @W+,PC      ; 2 fetch code address
+                                                        into PC, W=PFA
+     57    000014              
+     58    000014              ;Z lit      -- x    fetch inline literal to
+                                stack
+     59    000014              ; This is the primtive compiled by LITERAL.
+     60    000014                      HEADER  lit,3,'lit',DOCODE
+     60.1  000000                      PUBLIC  lit
+     60.2  000014 ....                 DW      link
+     60.3  000016 FF                   DB      0FFh       ; not immediate
+     60.4  000017              link    SET     $
+     60.5  000017 03                   DB      3
+     60.6  000018 6C6974               DB      'lit'
+     60.7  00001B 00                   EVEN
+     60.8  00001C                      IF      'DOCODE'='DOCODE'
+     60.9  00001C ....         lit: DW     $+2
+     60.10 00001E                      ELSE
+     60.11 00001E              lit: DW      DOCODE
+     60.12 00001E                      ENDIF
+     60.13 00001E                      ENDM
+     61    00001E 2483                 SUB #2,PSP      ; 1  push old TOS..
+     62    000020 84470000             MOV TOS,0(PSP)  ; 4  ..onto stack
+     63    000024 3745                 MOV @IP+,TOS    ; 2  fetch new TOS
+                                                        value
+     64    000026                      NEXT            ; 4
+     64.1  000026 3645                 MOV @IP+,W      ; fetch word address
+                                                            into W
+     64.2  000028 3046                 MOV @W+,PC      ; fetch code address
+                                                            into PC, W=PFA
+     64.3  00002A                      ENDM
+     65    00002A              
+     66    00002A              ;C EXIT     --            exit a colon
+                                definition
+     67    00002A                      HEADER  EXIT,4,'EXIT',DOCODE
+     67.1  000000                      PUBLIC  EXIT
+     67.2  00002A ....                 DW      link
+     67.3  00002C FF                   DB      0FFh       ; not immediate
+     67.4  00002D              link    SET     $
+     67.5  00002D 04                   DB      4
+     67.6  00002E 45584954             DB      'EXIT'
+     67.7  000032                      EVEN
+     67.8  000032                      IF      'DOCODE'='DOCODE'
+     67.9  000032 ....         EXIT: DW     $+2
+     67.10 000034                      ELSE
+     67.11 000034              EXIT: DW      DOCODE
+     67.12 000034                      ENDIF
+     67.13 000034                      ENDM
+     68    000034 3541                 MOV @RSP+,IP    ; 2 pop old IP from
+                                                        return stack
+     69    000036                      NEXT            ; 4
+     69.1  000036 3645                 MOV @IP+,W      ; fetch word address
+                                                            into W
+     69.2  000038 3046                 MOV @W+,PC      ; fetch code address
+                                                            into PC, W=PFA
+     69.3  00003A                      ENDM
+     70    00003A              
+     71    00003A              ; ----------------------------------------------
+                               ------------------------
+     72    00003A              ; DEFINING WORDS - ROMable ITC model 
+     73    00003A              
+     74    00003A              ; DOCOLON enters a new high-level thread (colon
+                                definition.)
+     75    00003A              ; (internal code fragment, not a Forth
+                                word)
+     76    000000                      PUBLIC DOCOLON
+     77    00003A              DOCOLON: 
+     78    00003A 0512                 PUSH.W IP         ; 3 save old IP on
+                                                          return stack
+     79    00003C 0546                 MOV W,IP        ; 1 set new IP to
+                                                        PFA
+     80    00003E                      NEXT            ; 4
+     80.1  00003E 3645                 MOV @IP+,W      ; fetch word address
+                                                            into W
+     80.2  000040 3046                 MOV @W+,PC      ; fetch code address
+                                                            into PC, W=PFA
+     80.3  000042                      ENDM
+     81    000042              
+     82    000042              
+     83    000042              ;C VARIABLE     --            define a Forth
+                                VARIABLE
+     84    000042              ;   CREATE CELL ALLOT ;
+     85    000042              ;mk Compile into FRAM. 
+     86    000042                      HEADER VARIABLE,8,'VARIABLE',DOCOLON
+     86.1  000000                      PUBLIC  VARIABLE
+     86.2  000042 ....                 DW      link
+     86.3  000044 FF                   DB      0FFh       ; not immediate
+     86.4  000045              link    SET     $
+     86.5  000045 08                   DB      8
+     86.6  000046 564152494142*        DB      'VARIABLE'
+     86.7  00004E                      EVEN
+     86.8  00004E                      IF      'DOCOLON'='DOCODE'
+     86.9  00004E              VARIABLE: DW     $+2
+     86.10 00004E                      ELSE
+     86.11 00004E ....         VARIABLE: DW      DOCOLON
+     86.12 000050                      ENDIF
+     86.13 000050                      ENDM
+     87    000050 ............*        DW CREATE,CELL,ALLOT,EXIT
+     88    000058              ;mk Note that the variable is stored in Code
+                                space since it is FRAM.
+     89    000058              ;mk No need to place a pointer to RAM as it is
+                                done in flash.
+     90    000000                      PUBLIC docreate
+     91    000000                      PUBLIC DOVAR
+     92    000058              docreate: ; -- a-addr   ; CREATE fetches address
+                                from PFA
+     93    000058              DOVAR:    ; -- a-addr   ; VARIABLE fetches
+                                address from PFADOVAR:
+     94    000058 2483                 SUB #2,PSP      ; make room on
+                                                        stack
+     95    00005A 84470000             MOV TOS,0(PSP)
+     96    00005E 0746                 MOV W,TOS      ;  parameter field to
+                                                       TOS
+     97    000060                      NEXT
+     97.1  000060 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+     97.2  000062 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+     97.3  000064                      ENDM
+     98    000064              
+     99    000064              ;C CONSTANT     --            define a Forth
+                                constant
+    100    000064              ;   <BUILDS  I,   Flashable Harvard model
+    101    000064              ;   DOES> (machine code fragment)
+    102    000064              ; Note that the constant is stored in Code
+                                space.
+    103    000064                      HEADER CONSTANT,8,'CONSTANT',DOCOLON
+    103.1  000000                      PUBLIC  CONSTANT
+    103.2  000064 ....                 DW      link
+    103.3  000066 FF                   DB      0FFh       ; not immediate
+    103.4  000067              link    SET     $
+    103.5  000067 08                   DB      8
+    103.6  000068 434F4E535441*        DB      'CONSTANT'
+    103.7  000070                      EVEN
+    103.8  000070                      IF      'DOCOLON'='DOCODE'
+    103.9  000070              CONSTANT: DW     $+2
+    103.10 000070                      ELSE
+    103.11 000070 ....         CONSTANT: DW      DOCOLON
+    103.12 000072                      ENDIF
+    103.13 000072                      ENDM
+    104    000072              ;mk        DW BUILDS,ICOMMA,XDOES
+    105    000072 ............         DW BUILDS,COMMA,XDOES
+    106    000000                      PUBLIC DOCON
+    107    000078              DOCON:  ; -- x          ; CONSTANT fetches cell
+                                from PFA to TOS
+    108    000078 2483                 SUB #2,PSP      ; make room on
+                                                        stack
+    109    00007A 84470000             MOV TOS,0(PSP)
+    110    00007E 2746                 MOV @W,TOS      ; fetch from parameter
+                                                        field to TOS
+    111    000080                      NEXT
+    111.1  000080 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    111.2  000082 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    111.3  000084                      ENDM
+    112    000084              
+    113    000084              ; DOCREATE's action is for a table in RAM.
+    114    000084              ; DOROM is the code action for a table in
+                                ROM;
+    115    000084              ; it returns the address of the parameter
+                                field.
+    116    000000                      PUBLIC DOROM
+    117    000084              DOROM:  ; -- a-addr     ; Table in ROM: get PFA
+                                into TOS
+    118    000084 2483                 SUB #2,PSP 
+    119    000086 84470000             MOV TOS,0(PSP)
+    120    00008A 0746                 MOV W,TOS
+    121    00008C                      NEXT
+    121.1  00008C 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    121.2  00008E 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    121.3  000090                      ENDM
+    122    000090              
+    123    000090              ;Z USER     n --        define user variable
+                                'n'
+    124    000090              ;   <BUILDS I, DOES> (machine code fragment)   
+                                Flashable model
+    125    000090                      HEADER USER,4,'USER',DOCOLON
+    125.1  000000                      PUBLIC  USER
+    125.2  000090 ....                 DW      link
+    125.3  000092 FF                   DB      0FFh       ; not immediate
+    125.4  000093              link    SET     $
+    125.5  000093 04                   DB      4
+    125.6  000094 55534552             DB      'USER'
+    125.7  000098                      EVEN
+    125.8  000098                      IF      'DOCOLON'='DOCODE'
+    125.9  000098              USER: DW     $+2
+    125.10 000098                      ELSE
+    125.11 000098 ....         USER: DW      DOCOLON
+    125.12 00009A                      ENDIF
+    125.13 00009A                      ENDM
+    126    00009A              ;m        DW BUILDS,ICOMMA,XDOES
+    127    00009A ............         DW BUILDS,COMMA,XDOES
+    128    000000                      PUBLIC DOUSER
+    129    0000A0              DOUSER: ; -- a-addr     ; add constant to User
+                                Pointer, result in TOS
+    130    0000A0 2483                 SUB #2,PSP
+    131    0000A2 84470000             MOV TOS,0(PSP)
+    132    0000A6 2746                 MOV @W,TOS
+    133    0000A8 1752....             ADD &UP,TOS
+    134    0000AC                      NEXT
+    134.1  0000AC 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    134.2  0000AE 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    134.3  0000B0                      ENDM
+    135    0000B0              
+    136    0000B0              ; DOALIAS  used to build a word which performs
+                                the action of
+    137    0000B0              ; another word.  Its action is to fetch the
+                                "alias" CFA from
+    138    0000B0              ; the parameter field, and execute that, e.g.
+                                DOES> I@ EXECUTE ;
+    139    0000B0              ; This is currently used only within the Forth
+                                kernel.
+    140    000000                      PUBLIC DOALIAS
+    141    0000B0              DOALIAS:  ; --          ; fetch CFA of word to
+                                execute
+    142    0000B0 2646                 MOV @W,W        ; 2 fetch from parameter
+                                                        field to W
+    143    0000B2 3046                 MOV @W+,PC      ; 2 fetch code address
+                                                        into PC, W=PFA
+    144    0000B4              
+    145    0000B4              ; DODOES is the code action of a DOES> clause. 
+                                For ITC Forth:
+    146    0000B4              ; defined word:  CFA: doescode
+    147    0000B4              ;                PFA: parameter field
+    148    0000B4              ;
+    149    0000B4              ; doescode: MOV #DODOES,PC      ; 16-bit direct
+                                jump, in two cells
+    150    0000B4              ;           high-level thread
+    151    0000B4              ;
+    152    0000B4              ; Note that we use JMP DODOES instead of CALL
+                                #DODOES because we can 
+    153    0000B4              ; efficiently obtain the thread address.  DODOES
+                                is entered with W=PFA.
+    154    0000B4              ; It enters the high-level thread with the
+                                address of the parameter
+    155    0000B4              ; field on top of stack.
+    156    0000B4              
+    157    000000                      PUBLIC dodoes
+    158    0000B4              dodoes: ; -- a-addr     ; 3 for MOV #DODOES,PC
+    159    0000B4 2483                 SUB #2,PSP      ; 1 make room on
+                                                        stack
+    160    0000B6 84470000             MOV TOS,0(PSP)  ; 4
+    161    0000BA 0746                 MOV W,TOS       ; 1 put defined word's
+                                                        PFA in TOS
+    162    0000BC 0512                 PUSH.W IP         ; 3 save old IP on
+                                                          return stack
+    163    0000BE 1546FEFF             MOV -2(W),IP    ; 3 fetch adrs of
+                                                        doescode from defined
+                                                        word
+    164    0000C2 2552                 ADD #4,IP       ; 1 skip MOV instruction
+                                                        to get thread
+                                                        adrs
+    165    0000C4                      NEXT            ; 4
+    165.1  0000C4 3645                 MOV @IP+,W      ; fetch word address
+                                                            into W
+    165.2  0000C6 3046                 MOV @W+,PC      ; fetch code address
+                                                            into PC, W=PFA
+    165.3  0000C8                      ENDM
+    166    0000C8              
+    167    0000C8              ; OPTION 1              ; OPTION 2
+    168    0000C8              ;  MOV #DODOES,PC   3   ;  CALL #DODOES     
+                                5
+    169    0000C8              ;   ...                 ;   ...
+    170    0000C8              ;  PUSH IP          3   ;  POP W           
+                                2
+    171    0000C8              ;  MOVE -2(W),IP    3   ;  PUSH IP         
+                                3
+    172    0000C8              ;  ADD #4,IP        1   ;  MOV W,IP        
+                                1
+    173    0000C8              
+    174    0000C8              
+    175    0000C8              ; ----------------------------------------------
+                               ------------------------
+    176    0000C8              ; STACK OPERATIONS
+    177    0000C8              
+    178    0000C8              ;C DUP      x -- x x      duplicate top of
+                                stack
+    179    0000C8                      HEADER  DUP,3,'DUP',DOCODE 
+    179.1  000000                      PUBLIC  DUP
+    179.2  0000C8 ....                 DW      link
+    179.3  0000CA FF                   DB      0FFh       ; not immediate
+    179.4  0000CB              link    SET     $
+    179.5  0000CB 03                   DB      3
+    179.6  0000CC 445550               DB      'DUP'
+    179.7  0000CF 00                   EVEN
+    179.8  0000D0                      IF      'DOCODE'='DOCODE'
+    179.9  0000D0 ....         DUP: DW     $+2
+    179.10 0000D2                      ELSE
+    179.11 0000D2              DUP: DW      DOCODE
+    179.12 0000D2                      ENDIF
+    179.13 0000D2                      ENDM
+    180    0000D2 2483         PUSHTOS: SUB    #2,PSP          ; 1  push old
+                                                                TOS..
+    181    0000D4 84470000             MOV     TOS,0(PSP)      ; 4  ..onto
+                                                                stack
+    182    0000D8                      NEXT                    ; 4
+    182.1  0000D8 3645                 MOV @IP+,W      ; fetch word address
+                                                                     into
+                                                                     W
+    182.2  0000DA 3046                 MOV @W+,PC      ; fetch code address
+                                                                     into PC,
+                                                                     W=PFA
+    182.3  0000DC                      ENDM
+    183    0000DC              
+    184    0000DC              ;C ?DUP     x -- 0 | x x    DUP if nonzero
+    185    0000DC                      HEADER  QDUP,4,'?DUP',DOCODE
+    185.1  000000                      PUBLIC  QDUP
+    185.2  0000DC ....                 DW      link
+    185.3  0000DE FF                   DB      0FFh       ; not immediate
+    185.4  0000DF              link    SET     $
+    185.5  0000DF 04                   DB      4
+    185.6  0000E0 3F445550             DB      '?DUP'
+    185.7  0000E4                      EVEN
+    185.8  0000E4                      IF      'DOCODE'='DOCODE'
+    185.9  0000E4 ....         QDUP: DW     $+2
+    185.10 0000E6                      ELSE
+    185.11 0000E6              QDUP: DW      DOCODE
+    185.12 0000E6                      ENDIF
+    185.13 0000E6                      ENDM
+    186    0000E6 0793                 CMP     #0,TOS          ; 1  test for
+                                                                TOS nonzero
+    187    0000E8 F423                 JNZ     PUSHTOS         ; 2
+    188    0000EA              NODUP:  NEXT                    ; 4
+    188.1  0000EA 3645                 MOV @IP+,W      ; fetch word address
+                                                                     into
+                                                                     W
+    188.2  0000EC 3046                 MOV @W+,PC      ; fetch code address
+                                                                     into PC,
+                                                                     W=PFA
+    188.3  0000EE                      ENDM
+    189    0000EE              
+    190    0000EE              ;C DROP     x --          drop top of stack
+    191    0000EE                      HEADER  DROP,4,'DROP',DOCODE
+    191.1  000000                      PUBLIC  DROP
+    191.2  0000EE ....                 DW      link
+    191.3  0000F0 FF                   DB      0FFh       ; not immediate
+    191.4  0000F1              link    SET     $
+    191.5  0000F1 04                   DB      4
+    191.6  0000F2 44524F50             DB      'DROP'
+    191.7  0000F6                      EVEN
+    191.8  0000F6                      IF      'DOCODE'='DOCODE'
+    191.9  0000F6 ....         DROP: DW     $+2
+    191.10 0000F8                      ELSE
+    191.11 0000F8              DROP: DW      DOCODE
+    191.12 0000F8                      ENDIF
+    191.13 0000F8                      ENDM
+    192    0000F8 3744                 MOV     @PSP+,TOS       ; 2
+    193    0000FA                      NEXT                    ; 4
+    193.1  0000FA 3645                 MOV @IP+,W      ; fetch word address
+                                                                     into
+                                                                     W
+    193.2  0000FC 3046                 MOV @W+,PC      ; fetch code address
+                                                                     into PC,
+                                                                     W=PFA
+    193.3  0000FE                      ENDM
+    194    0000FE              
+    195    0000FE              ;C SWAP     x1 x2 -- x2 x1    swap top two
+                                items
+    196    0000FE                      HEADER  SWAP,4,'SWAP',DOCODE
+    196.1  000000                      PUBLIC  SWAP
+    196.2  0000FE ....                 DW      link
+    196.3  000100 FF                   DB      0FFh       ; not immediate
+    196.4  000101              link    SET     $
+    196.5  000101 04                   DB      4
+    196.6  000102 53574150             DB      'SWAP'
+    196.7  000106                      EVEN
+    196.8  000106                      IF      'DOCODE'='DOCODE'
+    196.9  000106 ....         SWAP: DW     $+2
+    196.10 000108                      ELSE
+    196.11 000108              SWAP: DW      DOCODE
+    196.12 000108                      ENDIF
+    196.13 000108                      ENDM
+    197    000108 2644                 MOV     @PSP,W          ; 2
+    198    00010A 84470000             MOV     TOS,0(PSP)      ; 4
+    199    00010E 0746                 MOV     W,TOS           ; 1
+    200    000110                      NEXT                    ; 4
+    200.1  000110 3645                 MOV @IP+,W      ; fetch word address
+                                                                     into
+                                                                     W
+    200.2  000112 3046                 MOV @W+,PC      ; fetch code address
+                                                                     into PC,
+                                                                     W=PFA
+    200.3  000114                      ENDM
+    201    000114              
+    202    000114              ;C OVER    x1 x2 -- x1 x2 x1   per stack
+                                diagram
+    203    000114                      HEADER  OVER,4,'OVER',DOCODE
+    203.1  000000                      PUBLIC  OVER
+    203.2  000114 ....                 DW      link
+    203.3  000116 FF                   DB      0FFh       ; not immediate
+    203.4  000117              link    SET     $
+    203.5  000117 04                   DB      4
+    203.6  000118 4F564552             DB      'OVER'
+    203.7  00011C                      EVEN
+    203.8  00011C                      IF      'DOCODE'='DOCODE'
+    203.9  00011C ....         OVER: DW     $+2
+    203.10 00011E                      ELSE
+    203.11 00011E              OVER: DW      DOCODE
+    203.12 00011E                      ENDIF
+    203.13 00011E                      ENDM
+    204    00011E 2644                 MOV     @PSP,W          ; 2
+    205    000120 2483                 SUB     #2,PSP          ; 2
+    206    000122 84470000             MOV     TOS,0(PSP)      ; 4
+    207    000126 0746                 MOV     W,TOS           ; 1
+    208    000128                      NEXT                    ; 4
+    208.1  000128 3645                 MOV @IP+,W      ; fetch word address
+                                                                     into
+                                                                     W
+    208.2  00012A 3046                 MOV @W+,PC      ; fetch code address
+                                                                     into PC,
+                                                                     W=PFA
+    208.3  00012C                      ENDM
+    209    00012C              
+    210    00012C              ;C ROT    x1 x2 x3 -- x2 x3 x1  per stack
+                                diagram
+    211    00012C                      HEADER  ROT,3,'ROT',DOCODE
+    211.1  000000                      PUBLIC  ROT
+    211.2  00012C ....                 DW      link
+    211.3  00012E FF                   DB      0FFh       ; not immediate
+    211.4  00012F              link    SET     $
+    211.5  00012F 03                   DB      3
+    211.6  000130 524F54               DB      'ROT'
+    211.7  000133 00                   EVEN
+    211.8  000134                      IF      'DOCODE'='DOCODE'
+    211.9  000134 ....         ROT: DW     $+2
+    211.10 000136                      ELSE
+    211.11 000136              ROT: DW      DOCODE
+    211.12 000136                      ENDIF
+    211.13 000136                      ENDM
+    212    000136 2644                 MOV     @PSP,W          ; 2 fetch
+                                                                x2
+    213    000138 84470000             MOV     TOS,0(PSP)      ; 4 store
+                                                                x3
+    214    00013C 17440200             MOV     2(PSP),TOS      ; 3 fetch
+                                                                x1
+    215    000140 84460200             MOV     W,2(PSP)        ; 4 store
+                                                                x2
+    216    000144                      NEXT                    ; 4
+    216.1  000144 3645                 MOV @IP+,W      ; fetch word address
+                                                                     into
+                                                                     W
+    216.2  000146 3046                 MOV @W+,PC      ; fetch code address
+                                                                     into PC,
+                                                                     W=PFA
+    216.3  000148                      ENDM
+    217    000148              
+    218    000148              ;X NIP    x1 x2 -- x2           per stack
+                                diagram
+    219    000148                      HEADER  NIP,3,'NIP',DOCODE
+    219.1  000000                      PUBLIC  NIP
+    219.2  000148 ....                 DW      link
+    219.3  00014A FF                   DB      0FFh       ; not immediate
+    219.4  00014B              link    SET     $
+    219.5  00014B 03                   DB      3
+    219.6  00014C 4E4950               DB      'NIP'
+    219.7  00014F 00                   EVEN
+    219.8  000150                      IF      'DOCODE'='DOCODE'
+    219.9  000150 ....         NIP: DW     $+2
+    219.10 000152                      ELSE
+    219.11 000152              NIP: DW      DOCODE
+    219.12 000152                      ENDIF
+    219.13 000152                      ENDM
+    220    000152 2453                 ADD     #2,PSP          ; 1
+    221    000154                      NEXT                    ; 4
+    221.1  000154 3645                 MOV @IP+,W      ; fetch word address
+                                                                     into
+                                                                     W
+    221.2  000156 3046                 MOV @W+,PC      ; fetch code address
+                                                                     into PC,
+                                                                     W=PFA
+    221.3  000158                      ENDM
+    222    000158              
+    223    000158              ;C >R    x --   R: -- x   push to return
+                                stack
+    224    000158                      HEADER  TOR,2,'>R',DOCODE
+    224.1  000000                      PUBLIC  TOR
+    224.2  000158 ....                 DW      link
+    224.3  00015A FF                   DB      0FFh       ; not immediate
+    224.4  00015B              link    SET     $
+    224.5  00015B 02                   DB      2
+    224.6  00015C 3E52                 DB      '>R'
+    224.7  00015E                      EVEN
+    224.8  00015E                      IF      'DOCODE'='DOCODE'
+    224.9  00015E ....         TOR: DW     $+2
+    224.10 000160                      ELSE
+    224.11 000160              TOR: DW      DOCODE
+    224.12 000160                      ENDIF
+    224.13 000160                      ENDM
+    225    000160 0712                 PUSH.W TOS
+    226    000162 3744                 MOV @PSP+,TOS
+    227    000164                      NEXT
+    227.1  000164 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    227.2  000166 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    227.3  000168                      ENDM
+    228    000168              
+    229    000168              ;C R>    -- x    R: x --   pop from return
+                                stack
+    230    000168                      HEADER  RFROM,2,'R>',DOCODE
+    230.1  000000                      PUBLIC  RFROM
+    230.2  000168 ....                 DW      link
+    230.3  00016A FF                   DB      0FFh       ; not immediate
+    230.4  00016B              link    SET     $
+    230.5  00016B 02                   DB      2
+    230.6  00016C 523E                 DB      'R>'
+    230.7  00016E                      EVEN
+    230.8  00016E                      IF      'DOCODE'='DOCODE'
+    230.9  00016E ....         RFROM: DW     $+2
+    230.10 000170                      ELSE
+    230.11 000170              RFROM: DW      DOCODE
+    230.12 000170                      ENDIF
+    230.13 000170                      ENDM
+    231    000170 2483                 SUB #2,PSP      ; 2
+    232    000172 84470000             MOV TOS,0(PSP)    ; 4
+    233    000176 3741                 MOV @RSP+,TOS
+    234    000178                      NEXT
+    234.1  000178 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    234.2  00017A 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    234.3  00017C                      ENDM
+    235    00017C              
+    236    00017C              ;C R@    -- x     R: x -- x   fetch from rtn
+                                stk
+    237    00017C                      HEADER  RFETCH,2,'R@',DOCODE
+    237.1  000000                      PUBLIC  RFETCH
+    237.2  00017C ....                 DW      link
+    237.3  00017E FF                   DB      0FFh       ; not immediate
+    237.4  00017F              link    SET     $
+    237.5  00017F 02                   DB      2
+    237.6  000180 5240                 DB      'R@'
+    237.7  000182                      EVEN
+    237.8  000182                      IF      'DOCODE'='DOCODE'
+    237.9  000182 ....         RFETCH: DW     $+2
+    237.10 000184                      ELSE
+    237.11 000184              RFETCH: DW      DOCODE
+    237.12 000184                      ENDIF
+    237.13 000184                      ENDM
+    238    000184 2483                 SUB #2,PSP
+    239    000186 84470000             MOV TOS,0(PSP)
+    240    00018A 2741                 MOV @RSP,TOS
+    241    00018C                      NEXT
+    241.1  00018C 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    241.2  00018E 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    241.3  000190                      ENDM
+    242    000190              
+    243    000190              ;Z SP@  -- a-addr       get data stack
+                                pointer
+    244    000190                      HEADER  SPFETCH,3,'SP@',DOCODE
+    244.1  000000                      PUBLIC  SPFETCH
+    244.2  000190 ....                 DW      link
+    244.3  000192 FF                   DB      0FFh       ; not immediate
+    244.4  000193              link    SET     $
+    244.5  000193 03                   DB      3
+    244.6  000194 535040               DB      'SP@'
+    244.7  000197 00                   EVEN
+    244.8  000198                      IF      'DOCODE'='DOCODE'
+    244.9  000198 ....         SPFETCH: DW     $+2
+    244.10 00019A                      ELSE
+    244.11 00019A              SPFETCH: DW      DOCODE
+    244.12 00019A                      ENDIF
+    244.13 00019A                      ENDM
+    245    00019A 2483                 SUB #2,PSP
+    246    00019C 84470000             MOV TOS,0(PSP)
+    247    0001A0 0744                 MOV PSP,TOS
+    248    0001A2                      NEXT
+    248.1  0001A2 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    248.2  0001A4 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    248.3  0001A6                      ENDM
+    249    0001A6              
+    250    0001A6              ;Z SP!  a-addr --       set data stack
+                                pointer
+    251    0001A6                      HEADER  SPSTORE,3,'SP!',DOCODE
+    251.1  000000                      PUBLIC  SPSTORE
+    251.2  0001A6 ....                 DW      link
+    251.3  0001A8 FF                   DB      0FFh       ; not immediate
+    251.4  0001A9              link    SET     $
+    251.5  0001A9 03                   DB      3
+    251.6  0001AA 535021               DB      'SP!'
+    251.7  0001AD 00                   EVEN
+    251.8  0001AE                      IF      'DOCODE'='DOCODE'
+    251.9  0001AE ....         SPSTORE: DW     $+2
+    251.10 0001B0                      ELSE
+    251.11 0001B0              SPSTORE: DW      DOCODE
+    251.12 0001B0                      ENDIF
+    251.13 0001B0                      ENDM
+    252    0001B0 0447                 MOV     TOS,PSP
+    253    0001B2 3744                 MOV     @PSP+,TOS       ; 2
+    254    0001B4                      NEXT
+    254.1  0001B4 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    254.2  0001B6 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    254.3  0001B8                      ENDM
+    255    0001B8              
+    256    0001B8              ;Z RP@  -- a-addr       get return stack
+                                pointer
+    257    0001B8                      HEADER  RPFETCH,3,'RP@',DOCODE
+    257.1  000000                      PUBLIC  RPFETCH
+    257.2  0001B8 ....                 DW      link
+    257.3  0001BA FF                   DB      0FFh       ; not immediate
+    257.4  0001BB              link    SET     $
+    257.5  0001BB 03                   DB      3
+    257.6  0001BC 525040               DB      'RP@'
+    257.7  0001BF 00                   EVEN
+    257.8  0001C0                      IF      'DOCODE'='DOCODE'
+    257.9  0001C0 ....         RPFETCH: DW     $+2
+    257.10 0001C2                      ELSE
+    257.11 0001C2              RPFETCH: DW      DOCODE
+    257.12 0001C2                      ENDIF
+    257.13 0001C2                      ENDM
+    258    0001C2 2483                 SUB #2,PSP
+    259    0001C4 84470000             MOV TOS,0(PSP)
+    260    0001C8 0741                 MOV RSP,TOS
+    261    0001CA                      NEXT
+    261.1  0001CA 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    261.2  0001CC 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    261.3  0001CE                      ENDM
+    262    0001CE              
+    263    0001CE              ;Z RP!  a-addr --       set return stack
+                                pointer
+    264    0001CE                      HEADER  RPSTORE,3,'RP!',DOCODE
+    264.1  000000                      PUBLIC  RPSTORE
+    264.2  0001CE ....                 DW      link
+    264.3  0001D0 FF                   DB      0FFh       ; not immediate
+    264.4  0001D1              link    SET     $
+    264.5  0001D1 03                   DB      3
+    264.6  0001D2 525021               DB      'RP!'
+    264.7  0001D5 00                   EVEN
+    264.8  0001D6                      IF      'DOCODE'='DOCODE'
+    264.9  0001D6 ....         RPSTORE: DW     $+2
+    264.10 0001D8                      ELSE
+    264.11 0001D8              RPSTORE: DW      DOCODE
+    264.12 0001D8                      ENDIF
+    264.13 0001D8                      ENDM
+    265    0001D8 0147                 MOV     TOS,RSP
+    266    0001DA 3744                 MOV     @PSP+,TOS       ; 2
+    267    0001DC                      NEXT
+    267.1  0001DC 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    267.2  0001DE 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    267.3  0001E0                      ENDM
+    268    0001E0              
+    269    0001E0              ;X TUCK   x1 x2 -- x2 x1 x2     per stack
+                                diagram
+    270    0001E0                      HEADER  TUCK,4,'TUCK',DOCOLON
+    270.1  000000                      PUBLIC  TUCK
+    270.2  0001E0 ....                 DW      link
+    270.3  0001E2 FF                   DB      0FFh       ; not immediate
+    270.4  0001E3              link    SET     $
+    270.5  0001E3 04                   DB      4
+    270.6  0001E4 5455434B             DB      'TUCK'
+    270.7  0001E8                      EVEN
+    270.8  0001E8                      IF      'DOCOLON'='DOCODE'
+    270.9  0001E8              TUCK: DW     $+2
+    270.10 0001E8                      ELSE
+    270.11 0001E8 ....         TUCK: DW      DOCOLON
+    270.12 0001EA                      ENDIF
+    270.13 0001EA                      ENDM
+    271    0001EA ............         DC16    SWAP,OVER,EXIT
+    272    0001F0              
+    273    0001F0              ; ----------------------------------------------
+                               ------------------------
+    274    0001F0              ; MEMORY OPERATIONS
+    275    0001F0              
+    276    0001F0              ;C @       a-addr -- x   fetch cell from
+                                memory
+    277    0001F0                      HEADER  FETCH,1,'@',DOCODE
+    277.1  000000                      PUBLIC  FETCH
+    277.2  0001F0 ....                 DW      link
+    277.3  0001F2 FF                   DB      0FFh       ; not immediate
+    277.4  0001F3              link    SET     $
+    277.5  0001F3 01                   DB      1
+    277.6  0001F4 40                   DB      '@'
+    277.7  0001F5 00                   EVEN
+    277.8  0001F6                      IF      'DOCODE'='DOCODE'
+    277.9  0001F6 ....         FETCH: DW     $+2
+    277.10 0001F8                      ELSE
+    277.11 0001F8              FETCH: DW      DOCODE
+    277.12 0001F8                      ENDIF
+    277.13 0001F8                      ENDM
+    278    0001F8 2747                 MOV     @TOS,TOS
+    279    0001FA                      NEXT
+    279.1  0001FA 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    279.2  0001FC 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    279.3  0001FE                      ENDM
+    280    0001FE              
+    281    0001FE              ;C !        x a-addr --   store cell in
+                                memory
+    282    0001FE                      HEADER  STORE,1,'!',DOCODE
+    282.1  000000                      PUBLIC  STORE
+    282.2  0001FE ....                 DW      link
+    282.3  000200 FF                   DB      0FFh       ; not immediate
+    282.4  000201              link    SET     $
+    282.5  000201 01                   DB      1
+    282.6  000202 21                   DB      '!'
+    282.7  000203 00                   EVEN
+    282.8  000204                      IF      'DOCODE'='DOCODE'
+    282.9  000204 ....         STORE: DW     $+2
+    282.10 000206                      ELSE
+    282.11 000206              STORE: DW      DOCODE
+    282.12 000206                      ENDIF
+    282.13 000206                      ENDM
+    283    000206 B7440000             MOV     @PSP+,0(TOS)
+    284    00020A 3744                 MOV     @PSP+,TOS
+    285    00020C                      NEXT
+    285.1  00020C 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    285.2  00020E 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    285.3  000210                      ENDM
+    286    000210              
+    287    000210              ;C C@     c-addr -- char   fetch char from
+                                memory
+    288    000210                      HEADER  CFETCH,2,'C@',DOCODE
+    288.1  000000                      PUBLIC  CFETCH
+    288.2  000210 ....                 DW      link
+    288.3  000212 FF                   DB      0FFh       ; not immediate
+    288.4  000213              link    SET     $
+    288.5  000213 02                   DB      2
+    288.6  000214 4340                 DB      'C@'
+    288.7  000216                      EVEN
+    288.8  000216                      IF      'DOCODE'='DOCODE'
+    288.9  000216 ....         CFETCH: DW     $+2
+    288.10 000218                      ELSE
+    288.11 000218              CFETCH: DW      DOCODE
+    288.12 000218                      ENDIF
+    288.13 000218                      ENDM
+    289    000218 6747                 MOV.B   @TOS,TOS
+    290    00021A                      NEXT
+    290.1  00021A 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    290.2  00021C 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    290.3  00021E                      ENDM
+    291    00021E              
+    292    00021E              ;C C!      char c-addr --    store char in
+                                memory
+    293    00021E                      HEADER  CSTORE,2,'C!',DOCODE
+    293.1  000000                      PUBLIC  CSTORE
+    293.2  00021E ....                 DW      link
+    293.3  000220 FF                   DB      0FFh       ; not immediate
+    293.4  000221              link    SET     $
+    293.5  000221 02                   DB      2
+    293.6  000222 4321                 DB      'C!'
+    293.7  000224                      EVEN
+    293.8  000224                      IF      'DOCODE'='DOCODE'
+    293.9  000224 ....         CSTORE: DW     $+2
+    293.10 000226                      ELSE
+    293.11 000226              CSTORE: DW      DOCODE
+    293.12 000226                      ENDIF
+    293.13 000226                      ENDM
+    294    000226 3644                 MOV     @PSP+,W
+    295    000228 C7460000             MOV.B   W,0(TOS)
+    296    00022C 3744                 MOV     @PSP+,TOS
+    297    00022E                      NEXT
+    297.1  00022E 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    297.2  000230 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    297.3  000232                      ENDM
+    298    000232               
+    299    000232              ; FLASH MEMORY OPERATIONS
+    300    000232              ;mk errased; compare with core430f1611.s43 to
+                                see what has been erased.
+    301    000232              
+    302    000232              ; ----------------------------------------------
+                               ------------------------
+    303    000232              ; ARITHMETIC OPERATIONS
+    304    000232              
+    305    000232              ;C +       n1/u1 n2/u2 -- n3/u3     add
+                                n1+n2
+    306    000232                      HEADER  PLUS,1,'+',DOCODE
+    306.1  000000                      PUBLIC  PLUS
+    306.2  000232 ....                 DW      link
+    306.3  000234 FF                   DB      0FFh       ; not immediate
+    306.4  000235              link    SET     $
+    306.5  000235 01                   DB      1
+    306.6  000236 2B                   DB      '+'
+    306.7  000237 00                   EVEN
+    306.8  000238                      IF      'DOCODE'='DOCODE'
+    306.9  000238 ....         PLUS: DW     $+2
+    306.10 00023A                      ELSE
+    306.11 00023A              PLUS: DW      DOCODE
+    306.12 00023A                      ENDIF
+    306.13 00023A                      ENDM
+    307    00023A 3754                 ADD     @PSP+,TOS
+    308    00023C                      NEXT
+    308.1  00023C 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    308.2  00023E 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    308.3  000240                      ENDM
+    309    000240              
+    310    000240              ;C +!     n/u a-addr --       add cell to
+                                memory
+    311    000240                      HEADER  PLUSSTORE,2,'+!',DOCODE
+    311.1  000000                      PUBLIC  PLUSSTORE
+    311.2  000240 ....                 DW      link
+    311.3  000242 FF                   DB      0FFh       ; not immediate
+    311.4  000243              link    SET     $
+    311.5  000243 02                   DB      2
+    311.6  000244 2B21                 DB      '+!'
+    311.7  000246                      EVEN
+    311.8  000246                      IF      'DOCODE'='DOCODE'
+    311.9  000246 ....         PLUSSTORE: DW     $+2
+    311.10 000248                      ELSE
+    311.11 000248              PLUSSTORE: DW      DOCODE
+    311.12 000248                      ENDIF
+    311.13 000248                      ENDM
+    312    000248 B7540000             ADD     @PSP+,0(TOS)
+    313    00024C 3744                 MOV     @PSP+,TOS
+    314    00024E                      NEXT
+    314.1  00024E 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    314.2  000250 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    314.3  000252                      ENDM
+    315    000252              
+    316    000252              ;X M+       d n -- d         add single to
+                                double
+    317    000252                      HEADER  MPLUS,2,'M+',DOCODE
+    317.1  000000                      PUBLIC  MPLUS
+    317.2  000252 ....                 DW      link
+    317.3  000254 FF                   DB      0FFh       ; not immediate
+    317.4  000255              link    SET     $
+    317.5  000255 02                   DB      2
+    317.6  000256 4D2B                 DB      'M+'
+    317.7  000258                      EVEN
+    317.8  000258                      IF      'DOCODE'='DOCODE'
+    317.9  000258 ....         MPLUS: DW     $+2
+    317.10 00025A                      ELSE
+    317.11 00025A              MPLUS: DW      DOCODE
+    317.12 00025A                      ENDIF
+    317.13 00025A                      ENDM
+    318    00025A 84570200             ADD     TOS,2(PSP)
+    319    00025E 84630000             ADDC    #0,0(PSP)
+    320    000262 3744                 MOV     @PSP+,TOS
+    321    000264                      NEXT
+    321.1  000264 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    321.2  000266 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    321.3  000268                      ENDM
+    322    000268              
+    323    000268              ;C -      n1/u1 n2/u2 -- n3/u3    subtract
+                                n1-n2
+    324    000268                      HEADER  MINUS,1,'-',DOCODE
+    324.1  000000                      PUBLIC  MINUS
+    324.2  000268 ....                 DW      link
+    324.3  00026A FF                   DB      0FFh       ; not immediate
+    324.4  00026B              link    SET     $
+    324.5  00026B 01                   DB      1
+    324.6  00026C 2D                   DB      '-'
+    324.7  00026D 00                   EVEN
+    324.8  00026E                      IF      'DOCODE'='DOCODE'
+    324.9  00026E ....         MINUS: DW     $+2
+    324.10 000270                      ELSE
+    324.11 000270              MINUS: DW      DOCODE
+    324.12 000270                      ENDIF
+    324.13 000270                      ENDM
+    325    000270 3644                 MOV     @PSP+,W
+    326    000272 0687                 SUB     TOS,W
+    327    000274 0746                 MOV     W,TOS
+    328    000276                      NEXT
+    328.1  000276 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    328.2  000278 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    328.3  00027A                      ENDM
+    329    00027A              
+    330    00027A              ;C AND    x1 x2 -- x3            logical
+                                AND
+    331    00027A                      HEADER  ANDD,3,'AND',DOCODE
+    331.1  000000                      PUBLIC  ANDD
+    331.2  00027A ....                 DW      link
+    331.3  00027C FF                   DB      0FFh       ; not immediate
+    331.4  00027D              link    SET     $
+    331.5  00027D 03                   DB      3
+    331.6  00027E 414E44               DB      'AND'
+    331.7  000281 00                   EVEN
+    331.8  000282                      IF      'DOCODE'='DOCODE'
+    331.9  000282 ....         ANDD: DW     $+2
+    331.10 000284                      ELSE
+    331.11 000284              ANDD: DW      DOCODE
+    331.12 000284                      ENDIF
+    331.13 000284                      ENDM
+    332    000284 37F4                 AND     @PSP+,TOS
+    333    000286                      NEXT
+    333.1  000286 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    333.2  000288 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    333.3  00028A                      ENDM
+    334    00028A              
+    335    00028A              ;C OR     x1 x2 -- x3           logical
+                                OR
+    336    00028A                      HEADER  ORR,2,'OR',DOCODE
+    336.1  000000                      PUBLIC  ORR
+    336.2  00028A ....                 DW      link
+    336.3  00028C FF                   DB      0FFh       ; not immediate
+    336.4  00028D              link    SET     $
+    336.5  00028D 02                   DB      2
+    336.6  00028E 4F52                 DB      'OR'
+    336.7  000290                      EVEN
+    336.8  000290                      IF      'DOCODE'='DOCODE'
+    336.9  000290 ....         ORR: DW     $+2
+    336.10 000292                      ELSE
+    336.11 000292              ORR: DW      DOCODE
+    336.12 000292                      ENDIF
+    336.13 000292                      ENDM
+    337    000292 37D4                 BIS     @PSP+,TOS
+    338    000294                      NEXT
+    338.1  000294 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    338.2  000296 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    338.3  000298                      ENDM
+    339    000298              
+    340    000298              ;C XOR    x1 x2 -- x3            logical
+                                XOR
+    341    000298                      HEADER  XORR,3,'XOR',DOCODE
+    341.1  000000                      PUBLIC  XORR
+    341.2  000298 ....                 DW      link
+    341.3  00029A FF                   DB      0FFh       ; not immediate
+    341.4  00029B              link    SET     $
+    341.5  00029B 03                   DB      3
+    341.6  00029C 584F52               DB      'XOR'
+    341.7  00029F 00                   EVEN
+    341.8  0002A0                      IF      'DOCODE'='DOCODE'
+    341.9  0002A0 ....         XORR: DW     $+2
+    341.10 0002A2                      ELSE
+    341.11 0002A2              XORR: DW      DOCODE
+    341.12 0002A2                      ENDIF
+    341.13 0002A2                      ENDM
+    342    0002A2 37E4                 XOR     @PSP+,TOS
+    343    0002A4                      NEXT
+    343.1  0002A4 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    343.2  0002A6 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    343.3  0002A8                      ENDM
+    344    0002A8              
+    345    0002A8              ;C INVERT   x1 -- x2            bitwise
+                                inversion
+    346    0002A8                      HEADER  INVERT,6,'INVERT',DOCODE
+    346.1  000000                      PUBLIC  INVERT
+    346.2  0002A8 ....                 DW      link
+    346.3  0002AA FF                   DB      0FFh       ; not immediate
+    346.4  0002AB              link    SET     $
+    346.5  0002AB 06                   DB      6
+    346.6  0002AC 494E56455254         DB      'INVERT'
+    346.7  0002B2                      EVEN
+    346.8  0002B2                      IF      'DOCODE'='DOCODE'
+    346.9  0002B2 ....         INVERT: DW     $+2
+    346.10 0002B4                      ELSE
+    346.11 0002B4              INVERT: DW      DOCODE
+    346.12 0002B4                      ENDIF
+    346.13 0002B4                      ENDM
+    347    0002B4 37E3                 XOR     #-1,TOS
+    348    0002B6                      NEXT
+    348.1  0002B6 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    348.2  0002B8 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    348.3  0002BA                      ENDM
+    349    0002BA              
+    350    0002BA              ;C NEGATE   x1 -- x2            two's complement
+    351    0002BA                      HEADER  NEGATE,6,'NEGATE',DOCODE
+    351.1  000000                      PUBLIC  NEGATE
+    351.2  0002BA ....                 DW      link
+    351.3  0002BC FF                   DB      0FFh       ; not immediate
+    351.4  0002BD              link    SET     $
+    351.5  0002BD 06                   DB      6
+    351.6  0002BE 4E4547415445         DB      'NEGATE'
+    351.7  0002C4                      EVEN
+    351.8  0002C4                      IF      'DOCODE'='DOCODE'
+    351.9  0002C4 ....         NEGATE: DW     $+2
+    351.10 0002C6                      ELSE
+    351.11 0002C6              NEGATE: DW      DOCODE
+    351.12 0002C6                      ENDIF
+    351.13 0002C6                      ENDM
+    352    0002C6 37E3                 XOR     #-1,TOS
+    353    0002C8 1753                 ADD     #1,TOS
+    354    0002CA                      NEXT
+    354.1  0002CA 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    354.2  0002CC 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    354.3  0002CE                      ENDM
+    355    0002CE              
+    356    0002CE              ;C 1+      n1/u1 -- n2/u2       add 1 to
+                                TOS
+    357    0002CE                      HEADER  ONEPLUS,2,'1+',DOCODE
+    357.1  000000                      PUBLIC  ONEPLUS
+    357.2  0002CE ....                 DW      link
+    357.3  0002D0 FF                   DB      0FFh       ; not immediate
+    357.4  0002D1              link    SET     $
+    357.5  0002D1 02                   DB      2
+    357.6  0002D2 312B                 DB      '1+'
+    357.7  0002D4                      EVEN
+    357.8  0002D4                      IF      'DOCODE'='DOCODE'
+    357.9  0002D4 ....         ONEPLUS: DW     $+2
+    357.10 0002D6                      ELSE
+    357.11 0002D6              ONEPLUS: DW      DOCODE
+    357.12 0002D6                      ENDIF
+    357.13 0002D6                      ENDM
+    358    0002D6 1753                 ADD     #1,TOS
+    359    0002D8                      NEXT
+    359.1  0002D8 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    359.2  0002DA 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    359.3  0002DC                      ENDM
+    360    0002DC              
+    361    0002DC              ;C 1-      n1/u1 -- n2/u2     subtract 1 from
+                                TOS
+    362    0002DC                      HEADER  ONEMINUS,2,'1-',DOCODE
+    362.1  000000                      PUBLIC  ONEMINUS
+    362.2  0002DC ....                 DW      link
+    362.3  0002DE FF                   DB      0FFh       ; not immediate
+    362.4  0002DF              link    SET     $
+    362.5  0002DF 02                   DB      2
+    362.6  0002E0 312D                 DB      '1-'
+    362.7  0002E2                      EVEN
+    362.8  0002E2                      IF      'DOCODE'='DOCODE'
+    362.9  0002E2 ....         ONEMINUS: DW     $+2
+    362.10 0002E4                      ELSE
+    362.11 0002E4              ONEMINUS: DW      DOCODE
+    362.12 0002E4                      ENDIF
+    362.13 0002E4                      ENDM
+    363    0002E4 1783                 SUB     #1,TOS
+    364    0002E6                      NEXT
+    364.1  0002E6 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    364.2  0002E8 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    364.3  0002EA                      ENDM
+    365    0002EA              
+    366    0002EA              ;Z ><      x1 -- x2         swap bytes (not
+                                ANSI)
+    367    0002EA                      HEADER  SWAPBYTES,2,'><',DOCODE
+    367.1  000000                      PUBLIC  SWAPBYTES
+    367.2  0002EA ....                 DW      link
+    367.3  0002EC FF                   DB      0FFh       ; not immediate
+    367.4  0002ED              link    SET     $
+    367.5  0002ED 02                   DB      2
+    367.6  0002EE 3E3C                 DB      '><'
+    367.7  0002F0                      EVEN
+    367.8  0002F0                      IF      'DOCODE'='DOCODE'
+    367.9  0002F0 ....         SWAPBYTES: DW     $+2
+    367.10 0002F2                      ELSE
+    367.11 0002F2              SWAPBYTES: DW      DOCODE
+    367.12 0002F2                      ENDIF
+    367.13 0002F2                      ENDM
+    368    0002F2 8710                 SWPB    TOS
+    369    0002F4                      NEXT
+    369.1  0002F4 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    369.2  0002F6 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    369.3  0002F8                      ENDM
+    370    0002F8              
+    371    0002F8              ;C 2*      x1 -- x2         arithmetic left
+                                shift
+    372    0002F8                      HEADER  TWOSTAR,2,'2*',DOCODE
+    372.1  000000                      PUBLIC  TWOSTAR
+    372.2  0002F8 ....                 DW      link
+    372.3  0002FA FF                   DB      0FFh       ; not immediate
+    372.4  0002FB              link    SET     $
+    372.5  0002FB 02                   DB      2
+    372.6  0002FC 322A                 DB      '2*'
+    372.7  0002FE                      EVEN
+    372.8  0002FE                      IF      'DOCODE'='DOCODE'
+    372.9  0002FE ....         TWOSTAR: DW     $+2
+    372.10 000300                      ELSE
+    372.11 000300              TWOSTAR: DW      DOCODE
+    372.12 000300                      ENDIF
+    372.13 000300                      ENDM
+    373    000300 0757                 ADD     TOS,TOS
+    374    000302                      NEXT
+    374.1  000302 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    374.2  000304 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    374.3  000306                      ENDM
+    375    000306              
+    376    000306              ;C 2/      x1 -- x2        arithmetic right
+                                shift
+    377    000306                      HEADER  TWOSLASH,2,'2/',DOCODE
+    377.1  000000                      PUBLIC  TWOSLASH
+    377.2  000306 ....                 DW      link
+    377.3  000308 FF                   DB      0FFh       ; not immediate
+    377.4  000309              link    SET     $
+    377.5  000309 02                   DB      2
+    377.6  00030A 322F                 DB      '2/'
+    377.7  00030C                      EVEN
+    377.8  00030C                      IF      'DOCODE'='DOCODE'
+    377.9  00030C ....         TWOSLASH: DW     $+2
+    377.10 00030E                      ELSE
+    377.11 00030E              TWOSLASH: DW      DOCODE
+    377.12 00030E                      ENDIF
+    377.13 00030E                      ENDM
+    378    00030E 0711                 RRA     TOS
+    379    000310                      NEXT
+    379.1  000310 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    379.2  000312 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    379.3  000314                      ENDM
+    380    000314              
+    381    000314              ;C LSHIFT  x1 u -- x2    logical L shift u
+                                places
+    382    000314                      HEADER  LSHIFT,6,'LSHIFT',DOCODE
+    382.1  000000                      PUBLIC  LSHIFT
+    382.2  000314 ....                 DW      link
+    382.3  000316 FF                   DB      0FFh       ; not immediate
+    382.4  000317              link    SET     $
+    382.5  000317 06                   DB      6
+    382.6  000318 4C5348494654         DB      'LSHIFT'
+    382.7  00031E                      EVEN
+    382.8  00031E                      IF      'DOCODE'='DOCODE'
+    382.9  00031E ....         LSHIFT: DW     $+2
+    382.10 000320                      ELSE
+    382.11 000320              LSHIFT: DW      DOCODE
+    382.12 000320                      ENDIF
+    382.13 000320                      ENDM
+    383    000320 3644                 MOV     @PSP+,W
+    384    000322 37F01F00             AND     #1Fh,TOS        ; no need to
+                                                                shift more than
+                                                                16
+    385    000326 0324                 JZ      LSH_X
+    386    000328 0656         LSH_1:  ADD     W,W
+    387    00032A 1783                 SUB     #1,TOS
+    388    00032C FD23                 JNZ     LSH_1
+    389    00032E 0746         LSH_X:  MOV     W,TOS
+    390    000330                      NEXT
+    390.1  000330 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    390.2  000332 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    390.3  000334                      ENDM
+    391    000334              
+    392    000334              ;C RSHIFT  x1 u -- x2    logical R shift u
+                                places
+    393    000334                      HEADER  RSHIFT,6,'RSHIFT',DOCODE
+    393.1  000000                      PUBLIC  RSHIFT
+    393.2  000334 ....                 DW      link
+    393.3  000336 FF                   DB      0FFh       ; not immediate
+    393.4  000337              link    SET     $
+    393.5  000337 06                   DB      6
+    393.6  000338 525348494654         DB      'RSHIFT'
+    393.7  00033E                      EVEN
+    393.8  00033E                      IF      'DOCODE'='DOCODE'
+    393.9  00033E ....         RSHIFT: DW     $+2
+    393.10 000340                      ELSE
+    393.11 000340              RSHIFT: DW      DOCODE
+    393.12 000340                      ENDIF
+    393.13 000340                      ENDM
+    394    000340 3644                 MOV     @PSP+,W
+    395    000342 37F01F00             AND     #1Fh,TOS        ; no need to
+                                                                shift more than
+                                                                16
+    396    000346 0424                 JZ      RSH_X
+    397    000348 12C3         RSH_1:  CLRC
+    398    00034A 0610                 RRC     W
+    399    00034C 1783                 SUB     #1,TOS
+    400    00034E FC23                 JNZ     RSH_1
+    401    000350 0746         RSH_X:  MOV     W,TOS
+    402    000352                      NEXT
+    402.1  000352 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    402.2  000354 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    402.3  000356                      ENDM
+    403    000356              
+    404    000356              ; ----------------------------------------------
+                               ------------------------
+    405    000356              ; COMPARISON OPERATIONS 
+    406    000356              
+    407    000356              ;C 0=     n/u -- flag    return true if
+                                TOS=0
+    408    000356                      HEADER ZEROEQUAL,2,'0=',DOCODE
+    408.1  000000                      PUBLIC  ZEROEQUAL
+    408.2  000356 ....                 DW      link
+    408.3  000358 FF                   DB      0FFh       ; not immediate
+    408.4  000359              link    SET     $
+    408.5  000359 02                   DB      2
+    408.6  00035A 303D                 DB      '0='
+    408.7  00035C                      EVEN
+    408.8  00035C                      IF      'DOCODE'='DOCODE'
+    408.9  00035C ....         ZEROEQUAL: DW     $+2
+    408.10 00035E                      ELSE
+    408.11 00035E              ZEROEQUAL: DW      DOCODE
+    408.12 00035E                      ENDIF
+    408.13 00035E                      ENDM
+    409    00035E 1783                 SUB     #1,TOS      ; borrow (clear cy)
+                                                            if TOS was
+                                                            0
+    410    000360 0777                 SUBC    TOS,TOS     ; TOS=-1 if borrow
+                                                            was set
+    411    000362                      NEXT
+    411.1  000362 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    411.2  000364 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    411.3  000366                      ENDM
+    412    000366              
+    413    000366              ;C 0<     n -- flag      true if TOS negative
+    414    000366                      HEADER ZEROLESS,2,'0<',DOCODE
+    414.1  000000                      PUBLIC  ZEROLESS
+    414.2  000366 ....                 DW      link
+    414.3  000368 FF                   DB      0FFh       ; not immediate
+    414.4  000369              link    SET     $
+    414.5  000369 02                   DB      2
+    414.6  00036A 303C                 DB      '0<'
+    414.7  00036C                      EVEN
+    414.8  00036C                      IF      'DOCODE'='DOCODE'
+    414.9  00036C ....         ZEROLESS: DW     $+2
+    414.10 00036E                      ELSE
+    414.11 00036E              ZEROLESS: DW      DOCODE
+    414.12 00036E                      ENDIF
+    414.13 00036E                      ENDM
+    415    00036E 0757                 ADD     TOS,TOS     ; set cy if TOS
+                                                            negative
+    416    000370 0777                 SUBC    TOS,TOS     ; TOS=-1 if carry
+                                                            was clear
+    417    000372 37E3                 XOR     #-1,TOS     ; TOS=-1 if carry
+                                                            was set
+    418    000374                      NEXT
+    418.1  000374 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    418.2  000376 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    418.3  000378                      ENDM
+    419    000378              
+    420    000378              ;C =      x1 x2 -- flag         test x1=x2
+    421    000378                      HEADER EQUAL,1,'=',DOCODE
+    421.1  000000                      PUBLIC  EQUAL
+    421.2  000378 ....                 DW      link
+    421.3  00037A FF                   DB      0FFh       ; not immediate
+    421.4  00037B              link    SET     $
+    421.5  00037B 01                   DB      1
+    421.6  00037C 3D                   DB      '='
+    421.7  00037D 00                   EVEN
+    421.8  00037E                      IF      'DOCODE'='DOCODE'
+    421.9  00037E ....         EQUAL: DW     $+2
+    421.10 000380                      ELSE
+    421.11 000380              EQUAL: DW      DOCODE
+    421.12 000380                      ENDIF
+    421.13 000380                      ENDM
+    422    000380 3644                 MOV     @PSP+,W
+    423    000382 0687                 SUB     TOS,W       ; x1-x2 in W, flags
+                                                            set
+    424    000384 1124                 JZ      TOSTRUE
+    425    000386 0743         TOSFALSE: MOV   #0,TOS
+    426    000388                      NEXT
+    426.1  000388 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    426.2  00038A 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    426.3  00038C                      ENDM
+    427    00038C              
+    428    00038C              ;X <>     x1 x2 -- flag    test not eq (not
+                                ANSI)
+    429    00038C                      HEADER NOTEQUAL,2,'<>',DOCOLON
+    429.1  000000                      PUBLIC  NOTEQUAL
+    429.2  00038C ....                 DW      link
+    429.3  00038E FF                   DB      0FFh       ; not immediate
+    429.4  00038F              link    SET     $
+    429.5  00038F 02                   DB      2
+    429.6  000390 3C3E                 DB      '<>'
+    429.7  000392                      EVEN
+    429.8  000392                      IF      'DOCOLON'='DOCODE'
+    429.9  000392              NOTEQUAL: DW     $+2
+    429.10 000392                      ELSE
+    429.11 000392 ....         NOTEQUAL: DW      DOCOLON
+    429.12 000394                      ENDIF
+    429.13 000394                      ENDM
+    430    000394 ............         DW EQUAL,ZEROEQUAL,EXIT
+    431    00039A              
+    432    00039A              ;C <      n1 n2 -- flag        test n1<n2,
+                                signed
+    433    00039A                      HEADER LESS,1,'<',DOCODE
+    433.1  000000                      PUBLIC  LESS
+    433.2  00039A ....                 DW      link
+    433.3  00039C FF                   DB      0FFh       ; not immediate
+    433.4  00039D              link    SET     $
+    433.5  00039D 01                   DB      1
+    433.6  00039E 3C                   DB      '<'
+    433.7  00039F 00                   EVEN
+    433.8  0003A0                      IF      'DOCODE'='DOCODE'
+    433.9  0003A0 ....         LESS: DW     $+2
+    433.10 0003A2                      ELSE
+    433.11 0003A2              LESS: DW      DOCODE
+    433.12 0003A2                      ENDIF
+    433.13 0003A2                      ENDM
+    434    0003A2 3644                 MOV     @PSP+,W
+    435    0003A4 0687                 SUB     TOS,W       ; x1-x2 in W, flags
+                                                            set
+    436    0003A6 EF37                 JGE     TOSFALSE
+    437    0003A8 3743         TOSTRUE: MOV    #-1,TOS
+    438    0003AA                      NEXT
+    438.1  0003AA 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    438.2  0003AC 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    438.3  0003AE                      ENDM
+    439    0003AE              
+    440    0003AE              ;C >     n1 n2 -- flag         test n1>n2,
+                                signed
+    441    0003AE                      HEADER GREATER,1,'>',DOCOLON
+    441.1  000000                      PUBLIC  GREATER
+    441.2  0003AE ....                 DW      link
+    441.3  0003B0 FF                   DB      0FFh       ; not immediate
+    441.4  0003B1              link    SET     $
+    441.5  0003B1 01                   DB      1
+    441.6  0003B2 3E                   DB      '>'
+    441.7  0003B3 00                   EVEN
+    441.8  0003B4                      IF      'DOCOLON'='DOCODE'
+    441.9  0003B4              GREATER: DW     $+2
+    441.10 0003B4                      ELSE
+    441.11 0003B4 ....         GREATER: DW      DOCOLON
+    441.12 0003B6                      ENDIF
+    441.13 0003B6                      ENDM
+    442    0003B6 ............         DW SWAP,LESS,EXIT
+    443    0003BC              
+    444    0003BC              ;C U<    u1 u2 -- flag       test u1<u2,
+                                unsigned
+    445    0003BC                      HEADER ULESS,2,'U<',DOCODE
+    445.1  000000                      PUBLIC  ULESS
+    445.2  0003BC ....                 DW      link
+    445.3  0003BE FF                   DB      0FFh       ; not immediate
+    445.4  0003BF              link    SET     $
+    445.5  0003BF 02                   DB      2
+    445.6  0003C0 553C                 DB      'U<'
+    445.7  0003C2                      EVEN
+    445.8  0003C2                      IF      'DOCODE'='DOCODE'
+    445.9  0003C2 ....         ULESS: DW     $+2
+    445.10 0003C4                      ELSE
+    445.11 0003C4              ULESS: DW      DOCODE
+    445.12 0003C4                      ENDIF
+    445.13 0003C4                      ENDM
+    446    0003C4 3644                 MOV     @PSP+,W
+    447    0003C6 0687                 SUB     TOS,W       ; u1-u2 in W, cy
+                                                            clear if borrow
+    448    0003C8 EF2B                 JNC     TOSTRUE
+    449    0003CA DD3F                 JMP     TOSFALSE
+    450    0003CC              
+    451    0003CC              ;X U>    u1 u2 -- flag     u1>u2 unsgd (not
+                                ANSI)
+    452    0003CC                      HEADER UGREATER,2,'U>',DOCOLON
+    452.1  000000                      PUBLIC  UGREATER
+    452.2  0003CC ....                 DW      link
+    452.3  0003CE FF                   DB      0FFh       ; not immediate
+    452.4  0003CF              link    SET     $
+    452.5  0003CF 02                   DB      2
+    452.6  0003D0 553E                 DB      'U>'
+    452.7  0003D2                      EVEN
+    452.8  0003D2                      IF      'DOCOLON'='DOCODE'
+    452.9  0003D2              UGREATER: DW     $+2
+    452.10 0003D2                      ELSE
+    452.11 0003D2 ....         UGREATER: DW      DOCOLON
+    452.12 0003D4                      ENDIF
+    452.13 0003D4                      ENDM
+    453    0003D4 ............         DW SWAP,ULESS,EXIT
+    454    0003DA              
+    455    0003DA              ; ----------------------------------------------
+                               ------------------------
+    456    0003DA              ; LOOP AND BRANCH OPERATIONS 
+    457    0003DA              ; These use relative branch addresses: a branch
+                                is ADD @IP,IP
+    458    0003DA              
+    459    0003DA              ;Z branch   --                  branch
+                                always
+    460    0003DA                      HEADER  bran,6,'branch',DOCODE
+    460.1  000000                      PUBLIC  bran
+    460.2  0003DA ....                 DW      link
+    460.3  0003DC FF                   DB      0FFh       ; not immediate
+    460.4  0003DD              link    SET     $
+    460.5  0003DD 06                   DB      6
+    460.6  0003DE 6272616E6368         DB      'branch'
+    460.7  0003E4                      EVEN
+    460.8  0003E4                      IF      'DOCODE'='DOCODE'
+    460.9  0003E4 ....         bran: DW     $+2
+    460.10 0003E6                      ELSE
+    460.11 0003E6              bran: DW      DOCODE
+    460.12 0003E6                      ENDIF
+    460.13 0003E6                      ENDM
+    461    0003E6 2555         dobran:  ADD @IP,IP   ; 2
+    462    0003E8                      NEXT            ; 4
+    462.1  0003E8 3645                 MOV @IP+,W      ; fetch word address
+                                                            into W
+    462.2  0003EA 3046                 MOV @W+,PC      ; fetch code address
+                                                            into PC, W=PFA
+    462.3  0003EC                      ENDM
+    463    0003EC              
+    464    0003EC              ;Z ?branch   x --              branch if TOS
+                                zero
+    465    0003EC                      HEADER  qbran,7,'?branch',DOCODE
+    465.1  000000                      PUBLIC  qbran
+    465.2  0003EC ....                 DW      link
+    465.3  0003EE FF                   DB      0FFh       ; not immediate
+    465.4  0003EF              link    SET     $
+    465.5  0003EF 07                   DB      7
+    465.6  0003F0 3F6272616E63*        DB      '?branch'
+    465.7  0003F7 00                   EVEN
+    465.8  0003F8                      IF      'DOCODE'='DOCODE'
+    465.9  0003F8 ....         qbran: DW     $+2
+    465.10 0003FA                      ELSE
+    465.11 0003FA              qbran: DW      DOCODE
+    465.12 0003FA                      ENDIF
+    465.13 0003FA                      ENDM
+    466    0003FA 0753                 ADD #0,TOS      ; 1  test TOS value
+    467    0003FC 3744                 MOV @PSP+,TOS   ; 2  pop new TOS value
+                                                        (doesn't change
+                                                        flags)
+    468    0003FE F327                 JZ  dobran    ; 2  if TOS was zero, take
+                                                      the branch
+    469    000400 2553                 ADD #2,IP       ; 1  else skip the
+                                                        branch destination
+    470    000402                      NEXT            ; 4
+    470.1  000402 3645                 MOV @IP+,W      ; fetch word address
+                                                            into W
+    470.2  000404 3046                 MOV @W+,PC      ; fetch code address
+                                                            into PC, W=PFA
+    470.3  000406                      ENDM
+    471    000406              
+    472    000406              ;Z (do)    n1|u1 n2|u2 --  R: -- sys1 sys2
+    473    000406              ;Z                          run-time code for
+                                DO
+    474    000406              ; '83 and ANSI standard loops terminate when the
+                                boundary of 
+    475    000406              ; limit-1 and limit is crossed, in either
+                                direction.  This can 
+    476    000406              ; be conveniently implemented by making the
+                                limit 8000h, so that
+    477    000406              ; arithmetic overflow logic can detect crossing.
+                                 I learned this 
+    478    000406              ; trick from Laxen & Perry F83.
+    479    000406              ; fudge factor = 8000h-limit, to be added to the
+                                start value.
+    480    000406                      HEADER  xdo,4,'(do)',DOCODE
+    480.1  000000                      PUBLIC  xdo
+    480.2  000406 ....                 DW      link
+    480.3  000408 FF                   DB      0FFh       ; not immediate
+    480.4  000409              link    SET     $
+    480.5  000409 04                   DB      4
+    480.6  00040A 28646F29             DB      '(do)'
+    480.7  00040E                      EVEN
+    480.8  00040E                      IF      'DOCODE'='DOCODE'
+    480.9  00040E ....         xdo: DW     $+2
+    480.10 000410                      ELSE
+    480.11 000410              xdo: DW      DOCODE
+    480.12 000410                      ENDIF
+    480.13 000410                      ENDM
+    481    000410 2182                 SUB     #4,RSP          ; push old loop
+                                                                values on
+                                                                return
+                                                                stack
+    482    000412 81490200             MOV     LIMIT,2(RSP)
+    483    000416 81480000             MOV     INDEX,0(RSP)
+    484    00041A 39400080             MOV     #8000h,LIMIT    ; compute
+                                                                8000h-limit
+                                                                "fudge
+                                                                factor"
+    485    00041E 3984                 SUB     @PSP+,LIMIT
+    486    000420 0847                 MOV     TOS,INDEX       ; loop ctr =
+                                                                index+fudge
+    487    000422 0859                 ADD     LIMIT,INDEX
+    488    000424 3744                 MOV     @PSP+,TOS       ; pop new
+                                                                TOS
+    489    000426                      NEXT
+    489.1  000426 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    489.2  000428 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    489.3  00042A                      ENDM
+    490    00042A              
+    491    00042A              ;Z (loop)   R: sys1 sys2 --  | sys1 sys2
+    492    00042A              ;Z                        run-time code for
+                                LOOP
+    493    00042A              ; Add 1 to the loop index.  If loop terminates,
+                                clean up the 
+    494    00042A              ; return stack and skip the branch.  Else take
+                                the inline branch.  
+    495    00042A              ; Note that LOOP terminates when index=8000h.
+    496    00042A                      HEADER  xloop,6,'(loop)',DOCODE
+    496.1  000000                      PUBLIC  xloop
+    496.2  00042A ....                 DW      link
+    496.3  00042C FF                   DB      0FFh       ; not immediate
+    496.4  00042D              link    SET     $
+    496.5  00042D 06                   DB      6
+    496.6  00042E 286C6F6F7029         DB      '(loop)'
+    496.7  000434                      EVEN
+    496.8  000434                      IF      'DOCODE'='DOCODE'
+    496.9  000434 ....         xloop: DW     $+2
+    496.10 000436                      ELSE
+    496.11 000436              xloop: DW      DOCODE
+    496.12 000436                      ENDIF
+    496.13 000436                      ENDM
+    497    000436 1853                 ADD     #1,INDEX
+    498    000438 32B00001             BIT     #100h,SR    ; is overflow bit
+                                                            set?
+    499    00043C D427                 JZ      dobran    ; no overflow =
+                                                          loop
+    500    00043E 2553                 ADD     #2,IP       ; overflow = loop
+                                                            done, skip branch
+                                                            ofs
+    501    000440 3841                 MOV     @RSP+,INDEX ; restore old loop
+                                                            values
+    502    000442 3941                 MOV     @RSP+,LIMIT
+    503    000444                      NEXT
+    503.1  000444 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    503.2  000446 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    503.3  000448                      ENDM
+    504    000448              
+    505    000448              ;Z (+loop)   n --   R: sys1 sys2 --  | sys1
+                                sys2
+    506    000448              ;Z                        run-time code for
+                                +LOOP
+    507    000448              ; Add n to the loop index.  If loop terminates,
+                                clean up the 
+    508    000448              ; return stack and skip the branch. Else take
+                                the inline branch.
+    509    000448                      HEADER  xplusloop,7,'(+loop)',DOCODE
+    509.1  000000                      PUBLIC  xplusloop
+    509.2  000448 ....                 DW      link
+    509.3  00044A FF                   DB      0FFh       ; not immediate
+    509.4  00044B              link    SET     $
+    509.5  00044B 07                   DB      7
+    509.6  00044C 282B6C6F6F70*        DB      '(+loop)'
+    509.7  000453 00                   EVEN
+    509.8  000454                      IF      'DOCODE'='DOCODE'
+    509.9  000454 ....         xplusloop: DW     $+2
+    509.10 000456                      ELSE
+    509.11 000456              xplusloop: DW      DOCODE
+    509.12 000456                      ENDIF
+    509.13 000456                      ENDM
+    510    000456 0857                 ADD     TOS,INDEX
+    511    000458 3744                 MOV     @PSP+,TOS   ; get new TOS,
+                                                            doesn't change
+                                                            flags
+    512    00045A 32B00001             BIT     #100h,SR    ; is overflow bit
+                                                            set?
+    513    00045E C327                 JZ      dobran    ; no overflow =
+                                                          loop
+    514    000460 2553                 ADD     #2,IP       ; overflow = loop
+                                                            done, skip branch
+                                                            ofs
+    515    000462 3841                 MOV     @RSP+,INDEX ; restore old loop
+                                                            values
+    516    000464 3941                 MOV     @RSP+,LIMIT
+    517    000466                      NEXT
+    517.1  000466 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    517.2  000468 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    517.3  00046A                      ENDM
+    518    00046A              
+    519    00046A              ;C I        -- n   R: sys1 sys2 -- sys1
+                                sys2
+    520    00046A              ;C                  get the innermost loop
+                                index
+    521    00046A                      HEADER  II,1,'I',DOCODE
+    521.1  000000                      PUBLIC  II
+    521.2  00046A ....                 DW      link
+    521.3  00046C FF                   DB      0FFh       ; not immediate
+    521.4  00046D              link    SET     $
+    521.5  00046D 01                   DB      1
+    521.6  00046E 49                   DB      'I'
+    521.7  00046F 00                   EVEN
+    521.8  000470                      IF      'DOCODE'='DOCODE'
+    521.9  000470 ....         II: DW     $+2
+    521.10 000472                      ELSE
+    521.11 000472              II: DW      DOCODE
+    521.12 000472                      ENDIF
+    521.13 000472                      ENDM
+    522    000472 2483                 SUB     #2,PSP          ; make room in
+                                                                TOS
+    523    000474 84470000             MOV     TOS,0(PSP)
+    524    000478 0748                 MOV     INDEX,TOS       ; index =
+                                                                loopctr -
+                                                                fudge
+    525    00047A 0789                 SUB     LIMIT,TOS
+    526    00047C                      NEXT
+    526.1  00047C 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    526.2  00047E 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    526.3  000480                      ENDM
+    527    000480              
+    528    000480              ;C J        -- n   R: 4*sys -- 4*sys
+    529    000480              ;C                  get the second loop
+                                index
+    530    000480                      HEADER  JJ,1,'J',DOCODE
+    530.1  000000                      PUBLIC  JJ
+    530.2  000480 ....                 DW      link
+    530.3  000482 FF                   DB      0FFh       ; not immediate
+    530.4  000483              link    SET     $
+    530.5  000483 01                   DB      1
+    530.6  000484 4A                   DB      'J'
+    530.7  000485 00                   EVEN
+    530.8  000486                      IF      'DOCODE'='DOCODE'
+    530.9  000486 ....         JJ: DW     $+2
+    530.10 000488                      ELSE
+    530.11 000488              JJ: DW      DOCODE
+    530.12 000488                      ENDIF
+    530.13 000488                      ENDM
+    531    000488 2483                 SUB     #2,PSP          ; make room in
+                                                                TOS
+    532    00048A 84470000             MOV     TOS,0(PSP)
+    533    00048E 2741                 MOV     @RSP,TOS        ; index =
+                                                                loopctr -
+                                                                fudge
+    534    000490 17810200             SUB     2(RSP),TOS
+    535    000494                      NEXT
+    535.1  000494 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    535.2  000496 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    535.3  000498                      ENDM
+    536    000498              
+    537    000498              ;C UNLOOP   --   R: sys1 sys2 --  drop loop
+                                parms
+    538    000498                      HEADER  UNLOOP,6,'UNLOOP',DOCODE
+    538.1  000000                      PUBLIC  UNLOOP
+    538.2  000498 ....                 DW      link
+    538.3  00049A FF                   DB      0FFh       ; not immediate
+    538.4  00049B              link    SET     $
+    538.5  00049B 06                   DB      6
+    538.6  00049C 554E4C4F4F50         DB      'UNLOOP'
+    538.7  0004A2                      EVEN
+    538.8  0004A2                      IF      'DOCODE'='DOCODE'
+    538.9  0004A2 ....         UNLOOP: DW     $+2
+    538.10 0004A4                      ELSE
+    538.11 0004A4              UNLOOP: DW      DOCODE
+    538.12 0004A4                      ENDIF
+    538.13 0004A4                      ENDM
+    539    0004A4 3841                 MOV     @RSP+,INDEX     ; restore old
+                                                                loop values
+    540    0004A6 3941                 MOV     @RSP+,LIMIT
+    541    0004A8                      NEXT
+    541.1  0004A8 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    541.2  0004AA 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    541.3  0004AC                      ENDM
+    542    0004AC              
+    543    0004AC              ; ----------------------------------------------
+                               ------------------------
+    544    0004AC              ; MULTIPLY AND DIVIDE
+    545    0004AC              
+    546    0004AC              ;C UM*     u1 u2 -- ud   unsigned 16x16->32
+                                mult.
+    547    0004AC                      HEADER  UMSTAR,3,'UM*',DOCODE
+    547.1  000000                      PUBLIC  UMSTAR
+    547.2  0004AC ....                 DW      link
+    547.3  0004AE FF                   DB      0FFh       ; not immediate
+    547.4  0004AF              link    SET     $
+    547.5  0004AF 03                   DB      3
+    547.6  0004B0 554D2A               DB      'UM*'
+    547.7  0004B3 00                   EVEN
+    547.8  0004B4                      IF      'DOCODE'='DOCODE'
+    547.9  0004B4 ....         UMSTAR: DW     $+2
+    547.10 0004B6                      ELSE
+    547.11 0004B6              UMSTAR: DW      DOCODE
+    547.12 0004B6                      ENDIF
+    547.13 0004B6                      ENDM
+    548    0004B6                      ; IROP1 = TOS register
+    549    0004B6 2A44                 MOV     @PSP,IROP2L     ; get u1, leave
+                                                                room on
+                                                                stack
+    550    0004B8              ;
+    551    0004B8              ; T.I. SIGNED MULTIPLY SUBROUTINE: IROP1 x
+                                IROP2L -> IRACM|IRACL
+    552    0004B8 0C43         MPYU:   CLR IRACL ; 0 -> LSBs RESULT
+    553    0004BA 0D43                 CLR IRACM ; 0 -> MSBs RESULT
+    554    0004BC              ; UNSIGNED MULTIPLY AND ACCUMULATE SUBROUTINE:
+    555    0004BC              ; (IROP1 x IROP2L) + IRACM|IRACL -> IRACM|IRACL
+    556    0004BC 0B43         MACU:   CLR IROP2M  ; MSBs MULTIPLIER
+    557    0004BE 1643                 MOV #1,IRBT ; BIT TEST REGISTER
+    558    0004C0 07B6         L$002:  BIT IRBT,IROP1 ; TEST ACTUAL BIT
+    559    0004C2 0224                 JZ L$01     ; IF 0: DO NOTHING
+    560    0004C4 0C5A                 ADD IROP2L,IRACL ; IF 1: ADD MULTIPLIER
+                                                         TO RESULT
+    561    0004C6 0D6B                 ADDC IROP2M,IRACM
+    562    0004C8 0A5A         L$01:   RLA IROP2L  ; MULTIPLIER x 2
+    563    0004CA 0B6B                 RLC IROP2M
+    564    0004CC              ;
+    565    0004CC 0656                 RLA IRBT    ; NEXT BIT TO TEST
+    566    0004CE F82B                 JNC L$002   ; IF BIT IN CARRY:
+                                                    FINISHED
+    567    0004D0              ; END T.I. ROUTINE  section 5.1.1 of MSP430
+                                Family Application Reports
+    568    0004D0 844C0000             MOV     IRACL,0(PSP)    ; low result on
+                                                                stack
+    569    0004D4 074D                 MOV     IRACM,TOS       ; high result in
+                                                                TOS
+    570    0004D6                      NEXT
+    570.1  0004D6 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    570.2  0004D8 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    570.3  0004DA                      ENDM
+    571    0004DA              
+    572    0004DA              ;C UM/MOD   ud u1 -- u2 u3   unsigned 32/16->16
+    573    0004DA                      HEADER  UMSLASHMOD,6,'UM/MOD',DOCODE
+    573.1  000000                      PUBLIC  UMSLASHMOD
+    573.2  0004DA ....                 DW      link
+    573.3  0004DC FF                   DB      0FFh       ; not immediate
+    573.4  0004DD              link    SET     $
+    573.5  0004DD 06                   DB      6
+    573.6  0004DE 554D2F4D4F44         DB      'UM/MOD'
+    573.7  0004E4                      EVEN
+    573.8  0004E4                      IF      'DOCODE'='DOCODE'
+    573.9  0004E4 ....         UMSLASHMOD: DW     $+2
+    573.10 0004E6                      ELSE
+    573.11 0004E6              UMSLASHMOD: DW      DOCODE
+    573.12 0004E6                      ENDIF
+    573.13 0004E6                      ENDM
+    574    0004E6                      ; IROP1 = TOS register
+    575    0004E6 3B44                 MOV     @PSP+,IROP2M    ; get ud
+                                                                hi
+    576    0004E8 2A44                 MOV     @PSP,IROP2L     ; get ud lo,
+                                                                leave room on
+                                                                stack
+    577    0004EA              ;
+    578    0004EA              ; T.I. UNSIGNED DIVISION SUBROUTINE 32-BIT BY
+                                16-BIT
+    579    0004EA              ; IROP2M|IROP2L : IROP1 -> IRACL REMAINDER IN
+                                IROP2M
+    580    0004EA              ; RETURN: CARRY = 0: OK CARRY = 1: QUOTIENT > 16
+                                BITS
+    581    0004EA 0C43         DIVIDE: CLR IRACL   ; CLEAR RESULT
+    582    0004EC 36401100             MOV #17,IRBT ; INITIALIZE LOOP
+                                                     COUNTER
+    583    0004F0 0B97         DIV1:   CMP IROP1,IROP2M ;
+    584    0004F2 0128                 JLO DIV2
+    585    0004F4 0B87                 SUB IROP1,IROP2M
+    586    0004F6 0C6C         DIV2:   RLC IRACL
+    587    0004F8 092C                 JC DIV4     ; Error: result > 16
+                                                    bits
+    588    0004FA 1683                 DEC IRBT    ; Decrement loop counter
+    589    0004FC 0624                 JZ DIV3     ; Is 0: terminate w/o
+                                                    error
+    590    0004FE 0A5A                 RLA IROP2L
+    591    000500 0B6B                 RLC IROP2M
+    592    000502 F62B                 JNC DIV1
+    593    000504 0B87                 SUB IROP1,IROP2M
+    594    000506 12D3                 SETC
+    595    000508 F63F                 JMP DIV2
+    596    00050A 12C3         DIV3:   CLRC        ; No error, C = 0
+    597    00050C              DIV4:   ; Error indication in C
+    598    00050C              ; END T.I. ROUTINE  Section 5.1.5 of MSP430
+                                Family Application Reports
+    599    00050C 844B0000             MOV     IROP2M,0(PSP)   ; remainder on
+                                                                stack
+    600    000510 074C                 MOV     IRACL,TOS       ; quotient in
+                                                                TOS
+    601    000512                      NEXT
+    601.1  000512 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    601.2  000514 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    601.3  000516                      ENDM
+    602    000516              
+    603    000516              ; ----------------------------------------------
+                               ------------------------
+    604    000516              ; BLOCK AND STRING OPERATIONS
+    605    000516              
+    606    000516              ;C FILL   c-addr u char --  fill memory with
+                                char
+    607    000516                      HEADER  FILL,4,'FILL',DOCODE
+    607.1  000000                      PUBLIC  FILL
+    607.2  000516 ....                 DW      link
+    607.3  000518 FF                   DB      0FFh       ; not immediate
+    607.4  000519              link    SET     $
+    607.5  000519 04                   DB      4
+    607.6  00051A 46494C4C             DB      'FILL'
+    607.7  00051E                      EVEN
+    607.8  00051E                      IF      'DOCODE'='DOCODE'
+    607.9  00051E ....         FILL: DW     $+2
+    607.10 000520                      ELSE
+    607.11 000520              FILL: DW      DOCODE
+    607.12 000520                      ENDIF
+    607.13 000520                      ENDM
+    608    000520 3A44                 MOV     @PSP+,X     ; count
+    609    000522 3644                 MOV     @PSP+,W     ; address
+    610    000524 0A93                 CMP     #0,X
+    611    000526 0524                 JZ      FILL_X
+    612    000528 C6470000     FILL_1: MOV.B   TOS,0(W)    ; store char in
+                                                            memory
+    613    00052C 1653                 ADD     #1,W
+    614    00052E 1A83                 SUB     #1,X
+    615    000530 FB23                 JNZ     FILL_1
+    616    000532 3744         FILL_X: MOV     @PSP+,TOS   ; pop new TOS
+    617    000534                      NEXT
+    617.1  000534 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    617.2  000536 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    617.3  000538                      ENDM
+    618    000538              
+    619    000538              ;X CMOVE   c-addr1 c-addr2 u --  move from
+                                bottom
+    620    000538              ; as defined in the ANSI optional String word
+                                set
+    621    000538              ; On byte machines, CMOVE and CMOVE> are
+                                logical
+    622    000538              ; factors of MOVE.  They are easy to implement
+                                on
+    623    000538              ; CPUs which have a block-move instruction.
+    624    000538                      HEADER  CMOVE,5,'CMOVE',DOCODE
+    624.1  000000                      PUBLIC  CMOVE
+    624.2  000538 ....                 DW      link
+    624.3  00053A FF                   DB      0FFh       ; not immediate
+    624.4  00053B              link    SET     $
+    624.5  00053B 05                   DB      5
+    624.6  00053C 434D4F5645           DB      'CMOVE'
+    624.7  000541 00                   EVEN
+    624.8  000542                      IF      'DOCODE'='DOCODE'
+    624.9  000542 ....         CMOVE: DW     $+2
+    624.10 000544                      ELSE
+    624.11 000544              CMOVE: DW      DOCODE
+    624.12 000544                      ENDIF
+    624.13 000544                      ENDM
+    625    000544 3644                 MOV     @PSP+,W     ; dest adrs
+    626    000546 3A44                 MOV     @PSP+,X     ; src adrs
+    627    000548 0793                 CMP     #0,TOS
+    628    00054A 0524                 JZ      CMOVE_X
+    629    00054C F64A0000     CMOVE_1: MOV.B  @X+,0(W)    ; copy byte
+    630    000550 1653                 ADD     #1,W
+    631    000552 1783                 SUB     #1,TOS
+    632    000554 FB23                 JNZ     CMOVE_1
+    633    000556 3744         CMOVE_X: MOV    @PSP+,TOS   ; pop new TOS
+    634    000558                      NEXT
+    634.1  000558 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    634.2  00055A 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    634.3  00055C                      ENDM
+    635    00055C              
+    636    00055C              ;X CMOVE>  c-addr1 c-addr2 u --  move from
+                                top
+    637    00055C              ; as defined in the ANSI optional String word
+                                set
+    638    00055C                      HEADER  CMOVEUP,6,'CMOVE>',DOCODE
+    638.1  000000                      PUBLIC  CMOVEUP
+    638.2  00055C ....                 DW      link
+    638.3  00055E FF                   DB      0FFh       ; not immediate
+    638.4  00055F              link    SET     $
+    638.5  00055F 06                   DB      6
+    638.6  000560 434D4F56453E         DB      'CMOVE>'
+    638.7  000566                      EVEN
+    638.8  000566                      IF      'DOCODE'='DOCODE'
+    638.9  000566 ....         CMOVEUP: DW     $+2
+    638.10 000568                      ELSE
+    638.11 000568              CMOVEUP: DW      DOCODE
+    638.12 000568                      ENDIF
+    638.13 000568                      ENDM
+    639    000568 3644                 MOV     @PSP+,W     ; dest adrs
+    640    00056A 3A44                 MOV     @PSP+,X     ; src adrs
+    641    00056C 0793                 CMP     #0,TOS
+    642    00056E 0824                 JZ      CMOVU_X
+    643    000570 0657                 ADD     TOS,W       ; start at
+                                                            end
+    644    000572 0A57                 ADD     TOS,X
+    645    000574 1A83         CMOVU_1: SUB    #1,X
+    646    000576 1683                 SUB     #1,W
+    647    000578 E64A0000             MOV.B   @X,0(W)     ; copy byte
+    648    00057C 1783                 SUB     #1,TOS
+    649    00057E FA23                 JNZ     CMOVU_1
+    650    000580 3744         CMOVU_X: MOV    @PSP+,TOS   ; pop new TOS
+    651    000582                      NEXT
+    651.1  000582 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    651.2  000584 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    651.3  000586                      ENDM
+    652    000586              
+    653    000586              /**  not needed in FRAM
+    654    000586              ;Z I->D     c-addr1 c-addr2 u --  move
+                                Code->Data
+    655    000586              ; Block move from Code space to Data space.
+    656    000586              ; On the MSP430, this is the same as CMOVE.
+    657    000586                     HEADER  ITOD,4,'I->D',CMOVE+2
+    658    000586              **/
+    659    000586              
+    660    000586              
+    661    000586              ;Z SKIP   c-addr u c -- c-addr' u'
+    662    000586              ;Z                          skip matching
+                                chars
+    663    000586              ; Although SKIP, SCAN, and S= are perhaps not
+                                the ideal factors 
+    664    000586              ; of WORD and FIND, they closely follow the
+                                string operations 
+    665    000586              ; available on many CPUs, and so are easy to
+                                implement and fast.
+    666    000586                      HEADER  SKIP,4,'SKIP',DOCODE
+    666.1  000000                      PUBLIC  SKIP
+    666.2  000586 ....                 DW      link
+    666.3  000588 FF                   DB      0FFh       ; not immediate
+    666.4  000589              link    SET     $
+    666.5  000589 04                   DB      4
+    666.6  00058A 534B4950             DB      'SKIP'
+    666.7  00058E                      EVEN
+    666.8  00058E                      IF      'DOCODE'='DOCODE'
+    666.9  00058E ....         SKIP: DW     $+2
+    666.10 000590                      ELSE
+    666.11 000590              SKIP: DW      DOCODE
+    666.12 000590                      ENDIF
+    666.13 000590                      ENDM
+    667    000590 3A44                 MOV     @PSP+,X     ; get count
+    668    000592 2644                 MOV     @PSP,W      ; get address, leave
+                                                            space on stack
+    669    000594 0A93                 CMP     #0,X
+    670    000596 0524                 JZ      SKIP_X
+    671    000598 6796         SKIP_1: CMP.B   @W,TOS      ; does character
+                                                            match?
+    672    00059A 0320                 JNZ     SKIP_X      ; no, we are
+                                                            done
+    673    00059C 1653                 ADD     #1,W
+    674    00059E 1A83                 SUB     #1,X
+    675    0005A0 FB23                 JNZ     SKIP_1
+    676    0005A2 84460000     SKIP_X: MOV     W,0(PSP)    ; store updated
+                                                            address on
+                                                            stack
+    677    0005A6 074A                 MOV     X,TOS       ; updated count to
+                                                            TOS
+    678    0005A8                      NEXT
+    678.1  0005A8 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    678.2  0005AA 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    678.3  0005AC                      ENDM
+    679    0005AC              
+    680    0005AC              ;Z SCAN    c-addr u c -- c-addr' u'
+    681    0005AC              ;Z                      find matching char
+    682    0005AC                      HEADER  SCAN,4,'SCAN',DOCODE
+    682.1  000000                      PUBLIC  SCAN
+    682.2  0005AC ....                 DW      link
+    682.3  0005AE FF                   DB      0FFh       ; not immediate
+    682.4  0005AF              link    SET     $
+    682.5  0005AF 04                   DB      4
+    682.6  0005B0 5343414E             DB      'SCAN'
+    682.7  0005B4                      EVEN
+    682.8  0005B4                      IF      'DOCODE'='DOCODE'
+    682.9  0005B4 ....         SCAN: DW     $+2
+    682.10 0005B6                      ELSE
+    682.11 0005B6              SCAN: DW      DOCODE
+    682.12 0005B6                      ENDIF
+    682.13 0005B6                      ENDM
+    683    0005B6 3A44                 MOV     @PSP+,X     ; get count
+    684    0005B8 2644                 MOV     @PSP,W      ; get address, leave
+                                                            space on stack
+    685    0005BA 0A93                 CMP     #0,X
+    686    0005BC 0524                 JZ      SCAN_X
+    687    0005BE 6796         SCAN_1: CMP.B   @W,TOS      ; does character
+                                                            match?
+    688    0005C0 0324                 JZ      SCAN_X      ; yes, we are
+                                                            done
+    689    0005C2 1653                 ADD     #1,W
+    690    0005C4 1A83                 SUB     #1,X
+    691    0005C6 FB23                 JNZ     SCAN_1
+    692    0005C8 84460000     SCAN_X: MOV     W,0(PSP)    ; store updated
+                                                            address on
+                                                            stack
+    693    0005CC 074A                 MOV     X,TOS       ; updated count to
+                                                            TOS
+    694    0005CE                      NEXT
+    694.1  0005CE 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    694.2  0005D0 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    694.3  0005D2                      ENDM
+    695    0005D2              
+    696    0005D2              ;Z S=    c-addr1 c-addr2 u -- n   string
+                                compare
+    697    0005D2              ;Z             n<0: s1<s2, n=0: s1=s2, n>0:
+                                s1>s2
+    698    0005D2                      HEADER  SEQUAL,2,'S=',DOCODE
+    698.1  000000                      PUBLIC  SEQUAL
+    698.2  0005D2 ....                 DW      link
+    698.3  0005D4 FF                   DB      0FFh       ; not immediate
+    698.4  0005D5              link    SET     $
+    698.5  0005D5 02                   DB      2
+    698.6  0005D6 533D                 DB      'S='
+    698.7  0005D8                      EVEN
+    698.8  0005D8                      IF      'DOCODE'='DOCODE'
+    698.9  0005D8 ....         SEQUAL: DW     $+2
+    698.10 0005DA                      ELSE
+    698.11 0005DA              SEQUAL: DW      DOCODE
+    698.12 0005DA                      ENDIF
+    698.13 0005DA                      ENDM
+    699    0005DA 3644                 MOV     @PSP+,W     ; adrs2
+    700    0005DC 3A44                 MOV     @PSP+,X     ; adrs1
+    701    0005DE 0793                 CMP     #0,TOS
+    702    0005E0 0A24                 JZ      SEQU_X
+    703    0005E2 FA960000     SEQU_1: CMP.B   @W+,0(X)    ; compare char1-char
+                                                           2
+    704    0005E6 0420                 JNZ     SMISMATCH
+    705    0005E8 1A53                 ADD     #1,X
+    706    0005EA 1783                 SUB     #1,TOS
+    707    0005EC FA23                 JNZ     SEQU_1
+    708    0005EE                      ; no mismatch found, strings are equal,
+                                TOS=0
+    709    0005EE 033C                 JMP     SEQU_X
+    710    0005F0                      ; mismatch found, CY clear if borrow set
+                                (s1<s2)
+    711    0005F0 0777         SMISMATCH: SUBC TOS,TOS     ; TOS=-1 if borrow
+                                                            was set
+    712    0005F2 0757                 ADD     TOS,TOS     ; TOS=-2 or
+                                                            0
+    713    0005F4 1753                 ADD     #1,TOS      ; TOS=-1 or
+                                                            +1
+    714    0005F6              SEQU_X: NEXT                ; return result in
+                                TOS
+    714.1  0005F6 3645                 MOV @IP+,W      ; fetch word address
+  into W
+    714.2  0005F8 3046                 MOV @W+,PC      ; fetch code address
+  into PC, W=PFA
+    714.3  0005FA                      ENDM
+    715    0005FA              
+    716    0005FA              ;Z N=    c-addr1 c-addr2 u -- n   name
+                                compare
+    717    0005FA              ;Z             n<0: s1<s2, n=0: s1=s2, n>0:
+                                s1>s2
+    718    0005FA              ; For Harvard model, c-addr1 is Data, c-addr2 is
+                                Header.
+    719    0005FA              ; On MSP430, both use the same fetch instruction
+                               , so N= is the same as S=.
+    720    0005FA                      HEADER  NEQUAL,2,'N=',SEQUAL+2
+    720.1  000000                      PUBLIC  NEQUAL
+    720.2  0005FA ....                 DW      link
+    720.3  0005FC FF                   DB      0FFh       ; not immediate
+    720.4  0005FD              link    SET     $
+    720.5  0005FD 02                   DB      2
+    720.6  0005FE 4E3D                 DB      'N='
+    720.7  000600                      EVEN
+    720.8  000600                      IF      'SEQUAL+2'='DOCODE'
+    720.9  000600              NEQUAL: DW     $+2
+    720.10 000600                      ELSE
+    720.11 000600 ....         NEQUAL: DW      SEQUAL+2
+    720.12 000602                      ENDIF
+    720.13 000602                      ENDM
+    721    000602              
+    722    000602              ; ----------------------------------------------
+                               ------------------------
+    723    000602              ; TERMINAL I/O
+    724    000602              
+    725    000602              ;C EMIT     c --    output character to
+                                console
+    726    000602                      HEADER  EMIT,4,'EMIT',DOCODE
+    726.1  000000                      PUBLIC  EMIT
+    726.2  000602 ....                 DW      link
+    726.3  000604 FF                   DB      0FFh       ; not immediate
+    726.4  000605              link    SET     $
+    726.5  000605 04                   DB      4
+    726.6  000606 454D4954             DB      'EMIT'
+    726.7  00060A                      EVEN
+    726.8  00060A                      IF      'DOCODE'='DOCODE'
+    726.9  00060A ....         EMIT: DW     $+2
+    726.10 00060C                      ELSE
+    726.11 00060C              EMIT: DW      DOCODE
+    726.12 00060C                      ENDIF
+    726.13 00060C                      ENDM
+    727    00060C              EMITLOOP:
+    728    00060C A2B3DC05             BIT   #UCTXIFG,&UCA0IFG  
+    729    000610 FD27                 JZ      EMITLOOP
+    730    000612 8247CE05             MOV   TOS,&UCA0TXBUF  ;m send character
+                                                              out of TOS
+                                                              
+    731    000616 3744                 MOV @PSP+,TOS
+    732    000618                      NEXT
+    732.1  000618 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    732.2  00061A 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    732.3  00061C                      ENDM
+    733    00061C              
+    734    000000              PUBLIC donoop
+    735    00061C              ;C KEY      -- c      get character from
+                                keyboard
+    736    00061C                      HEADER  KEY,3,'KEY',DOCODE
+    736.1  000000                      PUBLIC  KEY
+    736.2  00061C ....                 DW      link
+    736.3  00061E FF                   DB      0FFh       ; not immediate
+    736.4  00061F              link    SET     $
+    736.5  00061F 03                   DB      3
+    736.6  000620 4B4559               DB      'KEY'
+    736.7  000623 00                   EVEN
+    736.8  000624                      IF      'DOCODE'='DOCODE'
+    736.9  000624 ....         KEY: DW     $+2
+    736.10 000626                      ELSE
+    736.11 000626              KEY: DW      DOCODE
+    736.12 000626                      ENDIF
+    736.13 000626                      ENDM
+    737    000626              KEYLOOP:
+    738    000626 92B3DC05             BIT   #UCRXIFG,&UCA0IFG ; loop if bit0 =
+                                                                0 in interupt
+                                                                flag register
+    739    00062A FD27                 JZ      KEYLOOP
+    740    00062C 2483                 SUB     #2,PSP          ; 1  push old
+                                                                TOS..
+    741    00062E 84470000             MOV     TOS,0(PSP)      ; 4  ..onto
+                                                                stack
+    742    000632 1742CC05             MOV   &UCA0RXBUF,TOS    ;m read
+                                                                character into
+                                                                TOS
+    743    000636              donoop:
+    744    000636              donext: NEXT
+    744.1  000636 3645                 MOV @IP+,W      ; fetch word address
+                                                        into W
+    744.2  000638 3046                 MOV @W+,PC      ; fetch code address
+                                                        into PC, W=PFA
+    744.3  00063A                      ENDM
+    745    00063A              
+    746    00063A              ;X KEY?     -- f    return true if char
+                                waiting
+    747    00063A                      HEADER  KEYQ,4,'KEY?',DOCODE
+    747.1  000000                      PUBLIC  KEYQ
+    747.2  00063A ....                 DW      link
+    747.3  00063C FF                   DB      0FFh       ; not immediate
+    747.4  00063D              link    SET     $
+    747.5  00063D 04                   DB      4
+    747.6  00063E 4B45593F             DB      'KEY?'
+    747.7  000642                      EVEN
+    747.8  000642                      IF      'DOCODE'='DOCODE'
+    747.9  000642 ....         KEYQ: DW     $+2
+    747.10 000644                      ELSE
+    747.11 000644              KEYQ: DW      DOCODE
+    747.12 000644                      ENDIF
+    747.13 000644                      ENDM
+    748    000644 2483                 SUB     #2,PSP          ; 1  push old
+                                                                TOS..
+    749    000646 84470000             MOV     TOS,0(PSP)      ; 4  ..onto
+                                                                stack
+    750    00064A 92B3DC05             BIT   #UCRXIFG0,&UCA0IFG
+    751    00064E AC22                 JNZ     TOSTRUE
+    752    000650 9A3E                 JMP     TOSFALSE
+    753    000652              
+    754    000652              ; ----------------------------------------------
+                               ------------------------
+    755    000652              ; We #include the following source files, rather
+                                than compiling them 
+    756    000652              ; separately, so that they can inherit the value
+                                of 'link'.
+    757    000652              
+    758    000652              #include "deps430FR.s43"
+    759    0007A6              #include "hilvl430FR.s43"
+    760    00176A              #include "expapp.s43"   ; include your
+                                application here 
+    761    001838              
+    762    001838              ; put task at the very end. Dont FORGET beneath
+                                FENCE
+    763    001838              fenceadr:
+    764    000000              PUBLIC fenceadr
+    765    001838              ; TASK    --  
+    766    001838                   HEADER  TASK,4,'TASK',DOCOLON
+    766.1  000000                      PUBLIC  TASK
+    766.2  001838 ....                 DW      link
+    766.3  00183A FF                   DB      0FFh       ; not immediate
+    766.4  00183B              link    SET     $
+    766.5  00183B 04                   DB      4
+    766.6  00183C 5441534B             DB      'TASK'
+    766.7  001840                      EVEN
+    766.8  001840                      IF      'DOCOLON'='DOCODE'
+    766.9  001840              TASK: DW     $+2
+    766.10 001840                      ELSE
+    766.11 001840 ....         TASK: DW      DOCOLON
+    766.12 001842                      ENDIF
+    766.13 001842                      ENDM
+    767    001842 ....                 DW EXIT
+    768    001844              
+    769    000000              PUBLIC lastword
+    770    001844              lastword equ link
+    771    001844              
+    772    001844              ; for debug map only:
+    773    001844              CF430FRend:
+    774    001844              #define CFlength = CF430FRend-CF430FRstart
+    775    001844              
+    776    001844              END
+
+
+
+Segment             Type 	Mode
+----------------------------------------
+CODE                UNTYPED  	REL 
+
+Label               Mode   Type                   Segment    Value/Offset
+------------------------------------------------------------------------------
+ABBS                REL    CONST PUB UNTYP.       CODE       8E2 
+ABORT               REL    CONST PUB UNTYP.       CODE       10F6 
+ABORTQUOTE          REL    CONST PUB UNTYP.       CODE       1122 
+ACC1                REL    CONST UNTYP.           CODE       B5A 
+ACC3                REL    CONST UNTYP.           CODE       B90 
+ACC4                REL    CONST UNTYP.           CODE       B9A 
+ACC5                REL    CONST UNTYP.           CODE       B9E 
+ACCEPT              REL    CONST PUB UNTYP.       CODE       B50 
+ADC10CTL0           ABS    CONST UNTYP.           ASEG       700 
+ADC10CTL0_H         ABS    CONST UNTYP.           ASEG       701 
+ADC10CTL0_L         ABS    CONST UNTYP.           ASEG       700 
+ADC10CTL1           ABS    CONST UNTYP.           ASEG       702 
+ADC10CTL1_H         ABS    CONST UNTYP.           ASEG       703 
+ADC10CTL1_L         ABS    CONST UNTYP.           ASEG       702 
+ADC10CTL2           ABS    CONST UNTYP.           ASEG       704 
+ADC10CTL2_H         ABS    CONST UNTYP.           ASEG       705 
+ADC10CTL2_L         ABS    CONST UNTYP.           ASEG       704 
+ADC10HI             ABS    CONST UNTYP.           ASEG       708 
+ADC10HI_H           ABS    CONST UNTYP.           ASEG       709 
+ADC10HI_L           ABS    CONST UNTYP.           ASEG       708 
+ADC10IE             ABS    CONST UNTYP.           ASEG       71A 
+ADC10IE_H           ABS    CONST UNTYP.           ASEG       71B 
+ADC10IE_L           ABS    CONST UNTYP.           ASEG       71A 
+ADC10IFG            ABS    CONST UNTYP.           ASEG       71C 
+ADC10IFG_H          ABS    CONST UNTYP.           ASEG       71D 
+ADC10IFG_L          ABS    CONST UNTYP.           ASEG       71C 
+ADC10IV             ABS    CONST UNTYP.           ASEG       71E 
+ADC10IV_H           ABS    CONST UNTYP.           ASEG       71F 
+ADC10IV_L           ABS    CONST UNTYP.           ASEG       71E 
+ADC10LO             ABS    CONST UNTYP.           ASEG       706 
+ADC10LO_H           ABS    CONST UNTYP.           ASEG       707 
+ADC10LO_L           ABS    CONST UNTYP.           ASEG       706 
+ADC10MCTL0          ABS    CONST UNTYP.           ASEG       70A 
+ADC10MCTL0_H        ABS    CONST UNTYP.           ASEG       70B 
+ADC10MCTL0_L        ABS    CONST UNTYP.           ASEG       70A 
+ADC10MEM0           ABS    CONST UNTYP.           ASEG       712 
+ADC10MEM0_H         ABS    CONST UNTYP.           ASEG       713 
+ADC10MEM0_L         ABS    CONST UNTYP.           ASEG       712 
+AGAIN               REL    CONST PUB UNTYP.       CODE       1384 
+ALIGNED             REL    CONST PUB UNTYP.       CODE       676 
+ALIGNN              REL    CONST PUB UNTYP.       CODE       65C 
+ALLOT               REL    CONST PUB UNTYP.       CODE       D80 
+ANDD                REL    CONST PUB UNTYP.       CODE       282 
+APP                 REL    CONST PUB UNTYP.       CODE       81A 
+BACKSLASH           REL    CONST PUB UNTYP.       CODE       1660 
+BASE                REL    CONST PUB UNTYP.       CODE       7C4 
+BCD2BIN             ABS    CONST UNTYP.           ASEG       4BE 
+BEGIN               REL    CONST PUB UNTYP.       CODE       135E 
+BELL                REL    CONST PUB UNTYP.       CODE       151E 
+BIN2BCD             ABS    CONST UNTYP.           ASEG       4BC 
+BLANK               REL    CONST PUB UNTYP.       CODE       886 
+BRACCHAR            REL    CONST PUB UNTYP.       CODE       1164 
+BRACTICK            REL    CONST PUB UNTYP.       CODE       12CC 
+BUILDS              REL    CONST PUB UNTYP.       CODE       11BE 
+CCOMMA              REL    CONST PUB UNTYP.       CODE       DA4 
+CDCTL0              ABS    CONST UNTYP.           ASEG       8C0 
+CDCTL0_H            ABS    CONST UNTYP.           ASEG       8C1 
+CDCTL0_L            ABS    CONST UNTYP.           ASEG       8C0 
+CDCTL1              ABS    CONST UNTYP.           ASEG       8C2 
+CDCTL1_H            ABS    CONST UNTYP.           ASEG       8C3 
+CDCTL1_L            ABS    CONST UNTYP.           ASEG       8C2 
+CDCTL2              ABS    CONST UNTYP.           ASEG       8C4 
+CDCTL2_H            ABS    CONST UNTYP.           ASEG       8C5 
+CDCTL2_L            ABS    CONST UNTYP.           ASEG       8C4 
+CDCTL3              ABS    CONST UNTYP.           ASEG       8C6 
+CDCTL3_H            ABS    CONST UNTYP.           ASEG       8C7 
+CDCTL3_L            ABS    CONST UNTYP.           ASEG       8C6 
+CDINT               ABS    CONST UNTYP.           ASEG       8CC 
+CDINT_H             ABS    CONST UNTYP.           ASEG       8CD 
+CDINT_L             ABS    CONST UNTYP.           ASEG       8CC 
+CDIV                ABS    CONST UNTYP.           ASEG       8CE 
+CDIV_H              ABS    CONST UNTYP.           ASEG       8CF 
+CDIV_L              ABS    CONST UNTYP.           ASEG       8CE 
+CELL                REL    CONST PUB UNTYP.       CODE       68C 
+CELLPLUS            REL    CONST PUB UNTYP.       CODE       69A 
+CELLS               REL    CONST PUB UNTYP.       CODE       6AA 
+CEXIT               REL    CONST PUB UNTYP.       CODE       750 
+CF430FRend          REL    CONST UNTYP.           CODE       1844 
+CF430FRstart        REL    CONST UNTYP.           CODE       0 
+CFETCH              REL    CONST PUB UNTYP.       CODE       216 
+CFid                ABS    CONST EXT [-001] UNTYP. __EXTERNS  Solved Extern 
+CFver               ABS    CONST EXT [010] UNTYP. __EXTERNS  Solved Extern 
+CHARPLUS            REL    CONST PUB UNTYP.       CODE       6B6 
+CHARR               REL    CONST PUB UNTYP.       CODE       114E 
+CHARS               REL    CONST PUB UNTYP.       CODE       6C2 
+CLIP                REL    CONST PUB UNTYP.       CODE       17A4 
+CMOVE               REL    CONST PUB UNTYP.       CODE       542 
+CMOVEUP             REL    CONST PUB UNTYP.       CODE       566 
+CMOVE_1             REL    CONST UNTYP.           CODE       54C 
+CMOVE_X             REL    CONST UNTYP.           CODE       556 
+CMOVU_1             REL    CONST UNTYP.           CODE       574 
+CMOVU_X             REL    CONST UNTYP.           CODE       580 
+COLD                REL    CONST PUB UNTYP.       CODE       1742 
+COLDIP              REL    CONST PUB UNTYP.       CODE       1744 
+COLON               REL    CONST PUB UNTYP.       CODE       12A8 
+COMMA               REL    CONST PUB UNTYP.       CODE       D8E 
+COMMABRANCH         REL    CONST PUB UNTYP.       CODE       766 
+COMMACALL           REL    CONST PUB UNTYP.       CODE       70C 
+COMMACF             REL    CONST PUB UNTYP.       CODE       6F4 
+COMMADEST           REL    CONST PUB UNTYP.       CODE       774 
+COMMAJMP            REL    CONST PUB UNTYP.       CODE       720 
+COMMANONE           REL    CONST PUB UNTYP.       CODE       79E 
+COMMAXT             REL    CONST PUB UNTYP.       CODE       6DC 
+CONSTANT            REL    CONST PUB UNTYP.       CODE       70 
+CORY                REL    CONST PUB UNTYP.       CODE       8AE 
+COUNT               REL    CONST PUB UNTYP.       CODE       AC4 
+CR                  REL    CONST PUB UNTYP.       CODE       AD6 
+CRCDI               ABS    CONST UNTYP.           ASEG       150 
+CRCDIRB             ABS    CONST UNTYP.           ASEG       152 
+CRCDIRB_H           ABS    CONST UNTYP.           ASEG       153 
+CRCDIRB_L           ABS    CONST UNTYP.           ASEG       152 
+CRCDI_H             ABS    CONST UNTYP.           ASEG       151 
+CRCDI_L             ABS    CONST UNTYP.           ASEG       150 
+CRCINIRES           ABS    CONST UNTYP.           ASEG       154 
+CRCINIRES_H         ABS    CONST UNTYP.           ASEG       155 
+CRCINIRES_L         ABS    CONST UNTYP.           ASEG       154 
+CRCRESR             ABS    CONST UNTYP.           ASEG       156 
+CRCRESR_H           ABS    CONST UNTYP.           ASEG       157 
+CRCRESR_L           ABS    CONST UNTYP.           ASEG       156 
+CREATE              REL    CONST PUB UNTYP.       CODE       11D4 
+CSCTL0              ABS    CONST UNTYP.           ASEG       160 
+CSCTL0_H            ABS    CONST UNTYP.           ASEG       161 
+CSCTL0_L            ABS    CONST UNTYP.           ASEG       160 
+CSCTL1              ABS    CONST UNTYP.           ASEG       162 
+CSCTL1_H            ABS    CONST UNTYP.           ASEG       163 
+CSCTL1_L            ABS    CONST UNTYP.           ASEG       162 
+CSCTL2              ABS    CONST UNTYP.           ASEG       164 
+CSCTL2_H            ABS    CONST UNTYP.           ASEG       165 
+CSCTL2_L            ABS    CONST UNTYP.           ASEG       164 
+CSCTL3              ABS    CONST UNTYP.           ASEG       166 
+CSCTL3_H            ABS    CONST UNTYP.           ASEG       167 
+CSCTL3_L            ABS    CONST UNTYP.           ASEG       166 
+CSCTL4              ABS    CONST UNTYP.           ASEG       168 
+CSCTL4_H            ABS    CONST UNTYP.           ASEG       169 
+CSCTL4_L            ABS    CONST UNTYP.           ASEG       168 
+CSCTL5              ABS    CONST UNTYP.           ASEG       16A 
+CSCTL5_H            ABS    CONST UNTYP.           ASEG       16B 
+CSCTL5_L            ABS    CONST UNTYP.           ASEG       16A 
+CSCTL6              ABS    CONST UNTYP.           ASEG       16C 
+CSCTL6_H            ABS    CONST UNTYP.           ASEG       16D 
+CSCTL6_L            ABS    CONST UNTYP.           ASEG       16C 
+CSTORE              REL    CONST PUB UNTYP.       CODE       224 
+DABS                REL    CONST PUB UNTYP.       CODE       928 
+DDP                 REL    CONST PUB UNTYP.       CODE       7DC 
+DECIMAL             REL    CONST PUB UNTYP.       CODE       D46 
+DEPTH               REL    CONST PUB UNTYP.       CODE       14B0 
+DIGITQ              REL    CONST PUB UNTYP.       CODE       F1A 
+DIV1                REL    CONST UNTYP.           CODE       4F0 
+DIV2                REL    CONST UNTYP.           CODE       4F6 
+DIV3                REL    CONST UNTYP.           CODE       50A 
+DIV4                REL    CONST UNTYP.           CODE       50C 
+DIVIDE              REL    CONST UNTYP.           CODE       4EA 
+DMA0CTL             ABS    CONST UNTYP.           ASEG       510 
+DMA0CTL_H           ABS    CONST UNTYP.           ASEG       511 
+DMA0CTL_L           ABS    CONST UNTYP.           ASEG       510 
+DMA0DA              ABS    CONST UNTYP.           ASEG       516 
+DMA0DAH             ABS    CONST UNTYP.           ASEG       518 
+DMA0DAL             ABS    CONST UNTYP.           ASEG       516 
+DMA0DA_H            ABS    CONST UNTYP.           ASEG       517 
+DMA0DA_L            ABS    CONST UNTYP.           ASEG       516 
+DMA0SA              ABS    CONST UNTYP.           ASEG       512 
+DMA0SAH             ABS    CONST UNTYP.           ASEG       514 
+DMA0SAL             ABS    CONST UNTYP.           ASEG       512 
+DMA0SA_H            ABS    CONST UNTYP.           ASEG       513 
+DMA0SA_L            ABS    CONST UNTYP.           ASEG       512 
+DMA0SZ              ABS    CONST UNTYP.           ASEG       51A 
+DMA1CTL             ABS    CONST UNTYP.           ASEG       520 
+DMA1CTL_H           ABS    CONST UNTYP.           ASEG       521 
+DMA1CTL_L           ABS    CONST UNTYP.           ASEG       520 
+DMA1DA              ABS    CONST UNTYP.           ASEG       526 
+DMA1DAH             ABS    CONST UNTYP.           ASEG       528 
+DMA1DAL             ABS    CONST UNTYP.           ASEG       526 
+DMA1DA_H            ABS    CONST UNTYP.           ASEG       527 
+DMA1DA_L            ABS    CONST UNTYP.           ASEG       526 
+DMA1SA              ABS    CONST UNTYP.           ASEG       522 
+DMA1SAH             ABS    CONST UNTYP.           ASEG       524 
+DMA1SAL             ABS    CONST UNTYP.           ASEG       522 
+DMA1SA_H            ABS    CONST UNTYP.           ASEG       523 
+DMA1SA_L            ABS    CONST UNTYP.           ASEG       522 
+DMA1SZ              ABS    CONST UNTYP.           ASEG       52A 
+DMA2CTL             ABS    CONST UNTYP.           ASEG       530 
+DMA2CTL_H           ABS    CONST UNTYP.           ASEG       531 
+DMA2CTL_L           ABS    CONST UNTYP.           ASEG       530 
+DMA2DA              ABS    CONST UNTYP.           ASEG       536 
+DMA2DAH             ABS    CONST UNTYP.           ASEG       538 
+DMA2DAL             ABS    CONST UNTYP.           ASEG       536 
+DMA2DA_H            ABS    CONST UNTYP.           ASEG       537 
+DMA2DA_L            ABS    CONST UNTYP.           ASEG       536 
+DMA2SA              ABS    CONST UNTYP.           ASEG       532 
+DMA2SAH             ABS    CONST UNTYP.           ASEG       534 
+DMA2SAL             ABS    CONST UNTYP.           ASEG       532 
+DMA2SA_H            ABS    CONST UNTYP.           ASEG       533 
+DMA2SA_L            ABS    CONST UNTYP.           ASEG       532 
+DMA2SZ              ABS    CONST UNTYP.           ASEG       53A 
+DMACTL0             ABS    CONST UNTYP.           ASEG       500 
+DMACTL0_H           ABS    CONST UNTYP.           ASEG       501 
+DMACTL0_L           ABS    CONST UNTYP.           ASEG       500 
+DMACTL1             ABS    CONST UNTYP.           ASEG       502 
+DMACTL1_H           ABS    CONST UNTYP.           ASEG       503 
+DMACTL1_L           ABS    CONST UNTYP.           ASEG       502 
+DMACTL2             ABS    CONST UNTYP.           ASEG       504 
+DMACTL2_H           ABS    CONST UNTYP.           ASEG       505 
+DMACTL2_L           ABS    CONST UNTYP.           ASEG       504 
+DMACTL3             ABS    CONST UNTYP.           ASEG       506 
+DMACTL3_H           ABS    CONST UNTYP.           ASEG       507 
+DMACTL3_L           ABS    CONST UNTYP.           ASEG       506 
+DMACTL4             ABS    CONST UNTYP.           ASEG       508 
+DMACTL4_H           ABS    CONST UNTYP.           ASEG       509 
+DMACTL4_L           ABS    CONST UNTYP.           ASEG       508 
+DMAIV               ABS    CONST UNTYP.           ASEG       50E 
+DMAIV_H             ABS    CONST UNTYP.           ASEG       50F 
+DMAIV_L             ABS    CONST UNTYP.           ASEG       50E 
+DNEG1               REL    CONST UNTYP.           CODE       91E 
+DNEGATE             REL    CONST PUB UNTYP.       CODE       8F6 
+DO                  REL    CONST PUB UNTYP.       CODE       13E8 
+DOALIAS             REL    CONST PUB UNTYP.       CODE       B0 
+DOCODE              REL    CONST UNTYP.           CODE       Not solved 
+DOCOLON             REL    CONST PUB UNTYP.       CODE       3A 
+DOCON               REL    CONST PUB UNTYP.       CODE       78 
+DOES                REL    CONST PUB UNTYP.       CODE       1204 
+DOROM               REL    CONST PUB UNTYP.       CODE       84 
+DOT                 REL    CONST PUB UNTYP.       CODE       D20 
+DOTQUOTE            REL    CONST PUB UNTYP.       CODE       C0E 
+DOTS                REL    CONST PUB UNTYP.       CODE       161A 
+DOTS1               REL    CONST UNTYP.           CODE       164A 
+DOTS2               REL    CONST UNTYP.           CODE       1658 
+DOTVER              REL    CONST PUB UNTYP.       CODE       172C 
+DOUSER              REL    CONST PUB UNTYP.       CODE       A0 
+DOVAR               REL    CONST PUB UNTYP.       CODE       58 
+DROP                REL    CONST PUB UNTYP.       CODE       F6 
+DUMP                REL    CONST PUB UNTYP.       CODE       15AE 
+DUP                 REL    CONST PUB UNTYP.       CODE       D0 
+ELSS                REL    CONST PUB UNTYP.       CODE       1342 
+EMIT                REL    CONST PUB UNTYP.       CODE       60A 
+EMITLOOP            REL    CONST UNTYP.           CODE       60C 
+ENDLOOP             REL    CONST PUB UNTYP.       CODE       1406 
+ENVIRONMENTQ        REL    CONST PUB UNTYP.       CODE       14CE 
+EQUAL               REL    CONST PUB UNTYP.       CODE       37E 
+EVALUATE            REL    CONST PUB UNTYP.       CODE       107E 
+EXECUTE             REL    CONST PUB UNTYP.       CODE       C 
+EXIT                REL    CONST PUB UNTYP.       CODE       32 
+FALSE               REL    CONST PUB UNTYP.       CODE       153E 
+FENCE               REL    CONST PUB UNTYP.       CODE       836 
+FETCH               REL    CONST PUB UNTYP.       CODE       1F6 
+FILL                REL    CONST PUB UNTYP.       CODE       51E 
+FILL_1              REL    CONST UNTYP.           CODE       528 
+FILL_X              REL    CONST UNTYP.           CODE       532 
+FIND                REL    CONST PUB UNTYP.       CODE       ED2 
+FIND1               REL    CONST UNTYP.           CODE       EAA 
+FIND2               REL    CONST UNTYP.           CODE       EC2 
+FIND3               REL    CONST UNTYP.           CODE       EEE 
+FINDNAME            REL    CONST PUB UNTYP.       CODE       EA4 
+FMMOD1              REL    CONST UNTYP.           CODE       9A6 
+FMSLASHMOD          REL    CONST PUB UNTYP.       CODE       986 
+FORGET              REL    CONST PUB UNTYP.       CODE       1698 
+FRCTL0              ABS    CONST UNTYP.           ASEG       140 
+FRCTL0_H            ABS    CONST UNTYP.           ASEG       141 
+FRCTL0_L            ABS    CONST UNTYP.           ASEG       140 
+GCCTL0              ABS    CONST UNTYP.           ASEG       144 
+GCCTL0_H            ABS    CONST UNTYP.           ASEG       145 
+GCCTL0_L            ABS    CONST UNTYP.           ASEG       144 
+GCCTL1              ABS    CONST UNTYP.           ASEG       146 
+GCCTL1_H            ABS    CONST UNTYP.           ASEG       147 
+GCCTL1_L            ABS    CONST UNTYP.           ASEG       146 
+GREATER             REL    CONST PUB UNTYP.       CODE       3B4 
+HEADR               REL    CONST PUB UNTYP.       CODE       118E 
+HERE                REL    CONST PUB UNTYP.       CODE       D6E 
+HEX                 REL    CONST PUB UNTYP.       CODE       D5A 
+HIDE                REL    CONST PUB UNTYP.       CODE       1258 
+HOLD                REL    CONST PUB UNTYP.       CODE       C62 
+HP                  REL    CONST PUB UNTYP.       CODE       804 
+IFF                 REL    CONST PUB UNTYP.       CODE       131A 
+II                  REL    CONST PUB UNTYP.       CODE       470 
+IMMEDIATE           REL    CONST PUB UNTYP.       CODE       1292 
+IMMEDQ              REL    CONST PUB UNTYP.       CODE       E86 
+INTER1              REL    CONST UNTYP.           CODE       1022 
+INTER2              REL    CONST UNTYP.           CODE       104A 
+INTER3              REL    CONST UNTYP.           CODE       104C 
+INTER4              REL    CONST UNTYP.           CODE       1050 
+INTER5              REL    CONST UNTYP.           CODE       105C 
+INTER6              REL    CONST UNTYP.           CODE       106A 
+INTER8              REL    CONST UNTYP.           CODE       106A 
+INTER9              REL    CONST UNTYP.           CODE       106E 
+INTERPRET           REL    CONST PUB UNTYP.       CODE       1014 
+INVERT              REL    CONST PUB UNTYP.       CODE       2B2 
+JJ                  REL    CONST PUB UNTYP.       CODE       486 
+KEY                 REL    CONST PUB UNTYP.       CODE       624 
+KEYLOOP             REL    CONST UNTYP.           CODE       626 
+KEYQ                REL    CONST PUB UNTYP.       CODE       642 
+L$002               REL    CONST UNTYP.           CODE       4C0 
+L$01                REL    CONST UNTYP.           CODE       4C8 
+L0                  REL    CONST PUB UNTYP.       CODE       84C 
+LATEST              REL    CONST PUB UNTYP.       CODE       7FA 
+LDUMP1              REL    CONST UNTYP.           CODE       15B8 
+LDUMP2              REL    CONST UNTYP.           CODE       15D2 
+LDUMP3              REL    CONST UNTYP.           CODE       15F0 
+LEAV                REL    CONST PUB UNTYP.       CODE       144C 
+LEFTBRACKET         REL    CONST PUB UNTYP.       CODE       1232 
+LESS                REL    CONST PUB UNTYP.       CODE       3A0 
+LESSNUM             REL    CONST PUB UNTYP.       CODE       C7A 
+LFROM               REL    CONST PUB UNTYP.       CODE       13D0 
+LITER1              REL    CONST UNTYP.           CODE       F0E 
+LITERAL             REL    CONST PUB UNTYP.       CODE       EFC 
+LOO                 REL    CONST PUB UNTYP.       CODE       1424 
+LOOP1               REL    CONST UNTYP.           CODE       140C 
+LOOP2               REL    CONST UNTYP.           CODE       141A 
+LP                  REL    CONST PUB UNTYP.       CODE       80E 
+LPAREN              REL    CONST PUB UNTYP.       CODE       1178 
+LSHIFT              REL    CONST PUB UNTYP.       CODE       31E 
+LSH_1               REL    CONST UNTYP.           CODE       328 
+LSH_X               REL    CONST UNTYP.           CODE       32E 
+LSTACK              ABS    CONST EXT [003] UNTYP. __EXTERNS  Solved Extern 
+MAC                 ABS    CONST UNTYP.           ASEG       4C4 
+MAC32H              ABS    CONST UNTYP.           ASEG       4DA 
+MAC32H_H            ABS    CONST UNTYP.           ASEG       4DB 
+MAC32H_L            ABS    CONST UNTYP.           ASEG       4DA 
+MAC32L              ABS    CONST UNTYP.           ASEG       4D8 
+MAC32L_H            ABS    CONST UNTYP.           ASEG       4D9 
+MAC32L_L            ABS    CONST UNTYP.           ASEG       4D8 
+MACS                ABS    CONST UNTYP.           ASEG       4C6 
+MACS32H             ABS    CONST UNTYP.           ASEG       4DE 
+MACS32H_H           ABS    CONST UNTYP.           ASEG       4DF 
+MACS32H_L           ABS    CONST UNTYP.           ASEG       4DE 
+MACS32L             ABS    CONST UNTYP.           ASEG       4DC 
+MACS32L_H           ABS    CONST UNTYP.           ASEG       4DD 
+MACS32L_L           ABS    CONST UNTYP.           ASEG       4DC 
+MACS_H              ABS    CONST UNTYP.           ASEG       4C7 
+MACS_L              ABS    CONST UNTYP.           ASEG       4C6 
+MACU                REL    CONST UNTYP.           CODE       4BC 
+MAC_H               ABS    CONST UNTYP.           ASEG       4C5 
+MAC_L               ABS    CONST UNTYP.           ASEG       4C4 
+MAX                 REL    CONST PUB UNTYP.       CODE       A18 
+MAX1                REL    CONST UNTYP.           CODE       A24 
+MEM                 REL    CONST PUB UNTYP.       CODE       1674 
+MEMTOP              REL    CONST PUB UNTYP.       CODE       8A2 
+MIN                 REL    CONST PUB UNTYP.       CODE       A30 
+MIN1                REL    CONST UNTYP.           CODE       A3C 
+MINUS               REL    CONST PUB UNTYP.       CODE       26E 
+MODD                REL    CONST PUB UNTYP.       CODE       9E4 
+MOVE                REL    CONST PUB UNTYP.       CODE       1484 
+MOVE1               REL    CONST UNTYP.           CODE       14A0 
+MOVE2               REL    CONST UNTYP.           CODE       14A4 
+MPLUS               REL    CONST PUB UNTYP.       CODE       258 
+MPUCTL0             ABS    CONST UNTYP.           ASEG       5A0 
+MPUCTL0_H           ABS    CONST UNTYP.           ASEG       5A1 
+MPUCTL0_L           ABS    CONST UNTYP.           ASEG       5A0 
+MPUCTL1             ABS    CONST UNTYP.           ASEG       5A2 
+MPUCTL1_H           ABS    CONST UNTYP.           ASEG       5A3 
+MPUCTL1_L           ABS    CONST UNTYP.           ASEG       5A2 
+MPUSAM              ABS    CONST UNTYP.           ASEG       5A6 
+MPUSAM_H            ABS    CONST UNTYP.           ASEG       5A7 
+MPUSAM_L            ABS    CONST UNTYP.           ASEG       5A6 
+MPUSEG              ABS    CONST UNTYP.           ASEG       5A4 
+MPUSEG_H            ABS    CONST UNTYP.           ASEG       5A5 
+MPUSEG_L            ABS    CONST UNTYP.           ASEG       5A4 
+MPY                 ABS    CONST UNTYP.           ASEG       4C0 
+MPY32CTL0           ABS    CONST UNTYP.           ASEG       4EC 
+MPY32CTL0_H         ABS    CONST UNTYP.           ASEG       4ED 
+MPY32CTL0_L         ABS    CONST UNTYP.           ASEG       4EC 
+MPY32H              ABS    CONST UNTYP.           ASEG       4D2 
+MPY32H_H            ABS    CONST UNTYP.           ASEG       4D3 
+MPY32H_L            ABS    CONST UNTYP.           ASEG       4D2 
+MPY32L              ABS    CONST UNTYP.           ASEG       4D0 
+MPY32L_H            ABS    CONST UNTYP.           ASEG       4D1 
+MPY32L_L            ABS    CONST UNTYP.           ASEG       4D0 
+MPYS                ABS    CONST UNTYP.           ASEG       4C2 
+MPYS32H             ABS    CONST UNTYP.           ASEG       4D6 
+MPYS32H_H           ABS    CONST UNTYP.           ASEG       4D7 
+MPYS32H_L           ABS    CONST UNTYP.           ASEG       4D6 
+MPYS32L             ABS    CONST UNTYP.           ASEG       4D4 
+MPYS32L_H           ABS    CONST UNTYP.           ASEG       4D5 
+MPYS32L_L           ABS    CONST UNTYP.           ASEG       4D4 
+MPYS_H              ABS    CONST UNTYP.           ASEG       4C3 
+MPYS_L              ABS    CONST UNTYP.           ASEG       4C2 
+MPYU                REL    CONST UNTYP.           CODE       4B8 
+MPY_H               ABS    CONST UNTYP.           ASEG       4C1 
+MPY_L               ABS    CONST UNTYP.           ASEG       4C0 
+MS                  REL    CONST PUB UNTYP.       CODE       1506 
+MSTAR               REL    CONST PUB UNTYP.       CODE       936 
+NEGATE              REL    CONST PUB UNTYP.       CODE       2C4 
+NEQUAL              REL    CONST PUB UNTYP.       CODE       600 
+NEWEST              REL    CONST PUB UNTYP.       CODE       828 
+NFATOCFA            REL    CONST PUB UNTYP.       CODE       E6C 
+NFATOLFA            REL    CONST PUB UNTYP.       CODE       E56 
+NINIT               REL    CONST PUB UNTYP.       CODE       894 
+NIP                 REL    CONST PUB UNTYP.       CODE       150 
+NODUP               REL    CONST UNTYP.           CODE       EA 
+NOOP                REL    CONST PUB UNTYP.       CODE       154A 
+NOTEQUAL            REL    CONST PUB UNTYP.       CODE       392 
+NUM                 REL    CONST PUB UNTYP.       CODE       CAE 
+NUMGREATER          REL    CONST PUB UNTYP.       CODE       CDA 
+NUMS                REL    CONST PUB UNTYP.       CODE       CC4 
+NUMS1               REL    CONST UNTYP.           CODE       CC6 
+ONEMINUS            REL    CONST PUB UNTYP.       CODE       2E2 
+ONEMS               REL    CONST PUB UNTYP.       CODE       14E0 
+ONEPLUS             REL    CONST PUB UNTYP.       CODE       2D4 
+OP2                 ABS    CONST UNTYP.           ASEG       4C8 
+OP2H                ABS    CONST UNTYP.           ASEG       4E2 
+OP2H_H              ABS    CONST UNTYP.           ASEG       4E3 
+OP2H_L              ABS    CONST UNTYP.           ASEG       4E2 
+OP2L                ABS    CONST UNTYP.           ASEG       4E0 
+OP2L_H              ABS    CONST UNTYP.           ASEG       4E1 
+OP2L_L              ABS    CONST UNTYP.           ASEG       4E0 
+OP2_H               ABS    CONST UNTYP.           ASEG       4C9 
+OP2_L               ABS    CONST UNTYP.           ASEG       4C8 
+ORR                 REL    CONST PUB UNTYP.       CODE       290 
+OVER                REL    CONST PUB UNTYP.       CODE       11C 
+P1IV                ABS    CONST UNTYP.           ASEG       20E 
+P2IV                ABS    CONST UNTYP.           ASEG       21E 
+P3IV                ABS    CONST UNTYP.           ASEG       22E 
+P4IV                ABS    CONST UNTYP.           ASEG       23E 
+PAD                 REL    CONST PUB UNTYP.       CODE       842 
+PADAREA             ABS    CONST EXT [002] UNTYP. __EXTERNS  Solved Extern 
+PADIR               ABS    CONST UNTYP.           ASEG       204 
+PADIR_H             ABS    CONST UNTYP.           ASEG       205 
+PADIR_L             ABS    CONST UNTYP.           ASEG       204 
+PAIE                ABS    CONST UNTYP.           ASEG       21A 
+PAIES               ABS    CONST UNTYP.           ASEG       218 
+PAIES_H             ABS    CONST UNTYP.           ASEG       219 
+PAIES_L             ABS    CONST UNTYP.           ASEG       218 
+PAIE_H              ABS    CONST UNTYP.           ASEG       21B 
+PAIE_L              ABS    CONST UNTYP.           ASEG       21A 
+PAIFG               ABS    CONST UNTYP.           ASEG       21C 
+PAIFG_H             ABS    CONST UNTYP.           ASEG       21D 
+PAIFG_L             ABS    CONST UNTYP.           ASEG       21C 
+PAIN                ABS    CONST UNTYP.           ASEG       200 
+PAIN_H              ABS    CONST UNTYP.           ASEG       201 
+PAIN_L              ABS    CONST UNTYP.           ASEG       200 
+PAOUT               ABS    CONST UNTYP.           ASEG       202 
+PAOUT_H             ABS    CONST UNTYP.           ASEG       203 
+PAOUT_L             ABS    CONST UNTYP.           ASEG       202 
+PAREN               ABS    CONST UNTYP.           ASEG       206 
+PAREN_H             ABS    CONST UNTYP.           ASEG       207 
+PAREN_L             ABS    CONST UNTYP.           ASEG       206 
+PASEL0              ABS    CONST UNTYP.           ASEG       20A 
+PASEL0_H            ABS    CONST UNTYP.           ASEG       20B 
+PASEL0_L            ABS    CONST UNTYP.           ASEG       20A 
+PASEL1              ABS    CONST UNTYP.           ASEG       20C 
+PASEL1_H            ABS    CONST UNTYP.           ASEG       20D 
+PASEL1_L            ABS    CONST UNTYP.           ASEG       20C 
+PASELC              ABS    CONST UNTYP.           ASEG       216 
+PASELC_H            ABS    CONST UNTYP.           ASEG       217 
+PASELC_L            ABS    CONST UNTYP.           ASEG       216 
+PBDIR               ABS    CONST UNTYP.           ASEG       224 
+PBDIR_H             ABS    CONST UNTYP.           ASEG       225 
+PBDIR_L             ABS    CONST UNTYP.           ASEG       224 
+PBIE                ABS    CONST UNTYP.           ASEG       23A 
+PBIES               ABS    CONST UNTYP.           ASEG       238 
+PBIES_H             ABS    CONST UNTYP.           ASEG       239 
+PBIES_L             ABS    CONST UNTYP.           ASEG       238 
+PBIE_H              ABS    CONST UNTYP.           ASEG       23B 
+PBIE_L              ABS    CONST UNTYP.           ASEG       23A 
+PBIFG               ABS    CONST UNTYP.           ASEG       23C 
+PBIFG_H             ABS    CONST UNTYP.           ASEG       23D 
+PBIFG_L             ABS    CONST UNTYP.           ASEG       23C 
+PBIN                ABS    CONST UNTYP.           ASEG       220 
+PBIN_H              ABS    CONST UNTYP.           ASEG       221 
+PBIN_L              ABS    CONST UNTYP.           ASEG       220 
+PBOUT               ABS    CONST UNTYP.           ASEG       222 
+PBOUT_H             ABS    CONST UNTYP.           ASEG       223 
+PBOUT_L             ABS    CONST UNTYP.           ASEG       222 
+PBREN               ABS    CONST UNTYP.           ASEG       226 
+PBREN_H             ABS    CONST UNTYP.           ASEG       227 
+PBREN_L             ABS    CONST UNTYP.           ASEG       226 
+PBSEL0              ABS    CONST UNTYP.           ASEG       22A 
+PBSEL0_H            ABS    CONST UNTYP.           ASEG       22B 
+PBSEL0_L            ABS    CONST UNTYP.           ASEG       22A 
+PBSEL1              ABS    CONST UNTYP.           ASEG       22C 
+PBSEL1_H            ABS    CONST UNTYP.           ASEG       22D 
+PBSEL1_L            ABS    CONST UNTYP.           ASEG       22C 
+PBSELC              ABS    CONST UNTYP.           ASEG       236 
+PBSELC_H            ABS    CONST UNTYP.           ASEG       237 
+PBSELC_L            ABS    CONST UNTYP.           ASEG       236 
+PJDIR               ABS    CONST UNTYP.           ASEG       324 
+PJDIR_H             ABS    CONST UNTYP.           ASEG       325 
+PJDIR_L             ABS    CONST UNTYP.           ASEG       324 
+PJIN                ABS    CONST UNTYP.           ASEG       320 
+PJIN_H              ABS    CONST UNTYP.           ASEG       321 
+PJIN_L              ABS    CONST UNTYP.           ASEG       320 
+PJOUT               ABS    CONST UNTYP.           ASEG       322 
+PJOUT_H             ABS    CONST UNTYP.           ASEG       323 
+PJOUT_L             ABS    CONST UNTYP.           ASEG       322 
+PJREN               ABS    CONST UNTYP.           ASEG       326 
+PJREN_H             ABS    CONST UNTYP.           ASEG       327 
+PJREN_L             ABS    CONST UNTYP.           ASEG       326 
+PJSEL0              ABS    CONST UNTYP.           ASEG       32A 
+PJSEL0_H            ABS    CONST UNTYP.           ASEG       32B 
+PJSEL0_L            ABS    CONST UNTYP.           ASEG       32A 
+PJSEL1              ABS    CONST UNTYP.           ASEG       32C 
+PJSEL1_H            ABS    CONST UNTYP.           ASEG       32D 
+PJSEL1_L            ABS    CONST UNTYP.           ASEG       32C 
+PJSELC              ABS    CONST UNTYP.           ASEG       336 
+PJSELC_H            ABS    CONST UNTYP.           ASEG       337 
+PJSELC_L            ABS    CONST UNTYP.           ASEG       336 
+PLUS                REL    CONST PUB UNTYP.       CODE       238 
+PLUSLOOP            REL    CONST PUB UNTYP.       CODE       1438 
+PLUSSTORE           REL    CONST PUB UNTYP.       CODE       246 
+PM5CTL0             ABS    CONST UNTYP.           ASEG       130 
+PM5CTL0_H           ABS    CONST UNTYP.           ASEG       131 
+PM5CTL0_L           ABS    CONST UNTYP.           ASEG       130 
+PMMCTL0             ABS    CONST UNTYP.           ASEG       120 
+PMMCTL0_H           ABS    CONST UNTYP.           ASEG       121 
+PMMCTL0_L           ABS    CONST UNTYP.           ASEG       120 
+PMMIFG              ABS    CONST UNTYP.           ASEG       12A 
+PMMIFG_H            ABS    CONST UNTYP.           ASEG       12B 
+PMMIFG_L            ABS    CONST UNTYP.           ASEG       12A 
+POST1               REL    CONST UNTYP.           CODE       1310 
+POST2               REL    CONST UNTYP.           CODE       1312 
+POSTPONE            REL    CONST PUB UNTYP.       CODE       12E6 
+PROTECT             REL    CONST PUB UNTYP.       CODE       16DE 
+PSTACK              ABS    CONST EXT [004] UNTYP. __EXTERNS  Solved Extern 
+PUSHTOS             REL    CONST UNTYP.           CODE       D2 
+QABO1               REL    CONST UNTYP.           CODE       1114 
+QABORT              REL    CONST PUB UNTYP.       CODE       1108 
+QDNEGATE            REL    CONST PUB UNTYP.       CODE       914 
+QDUP                REL    CONST PUB UNTYP.       CODE       E4 
+QNEG1               REL    CONST UNTYP.           CODE       8D8 
+QNEGATE             REL    CONST PUB UNTYP.       CODE       8CE 
+QNUM1               REL    CONST UNTYP.           CODE       FF4 
+QNUM2               REL    CONST UNTYP.           CODE       1000 
+QNUM3               REL    CONST UNTYP.           CODE       1004 
+QNUMBER             REL    CONST PUB UNTYP.       CODE       FCE 
+QSIGN               REL    CONST PUB UNTYP.       CODE       F56 
+QSIGN1              REL    CONST UNTYP.           CODE       F80 
+QUIT                REL    CONST PUB UNTYP.       CODE       10A8 
+QUIT1               REL    CONST UNTYP.           CODE       10BC 
+QUIT2               REL    CONST UNTYP.           CODE       10E8 
+RAMDICT             ABS    CONST EXT [-001] UNTYP. __EXTERNS  Solved Extern 
+RECURSE             REL    CONST PUB UNTYP.       CODE       1220 
+REFCTL0             ABS    CONST UNTYP.           ASEG       1B0 
+REFCTL0_H           ABS    CONST UNTYP.           ASEG       1B1 
+REFCTL0_L           ABS    CONST UNTYP.           ASEG       1B0 
+REPEAT              REL    CONST PUB UNTYP.       CODE       13AC 
+RES0                ABS    CONST UNTYP.           ASEG       4E4 
+RES0_H              ABS    CONST UNTYP.           ASEG       4E5 
+RES0_L              ABS    CONST UNTYP.           ASEG       4E4 
+RES1                ABS    CONST UNTYP.           ASEG       4E6 
+RES1_H              ABS    CONST UNTYP.           ASEG       4E7 
+RES1_L              ABS    CONST UNTYP.           ASEG       4E6 
+RES2                ABS    CONST UNTYP.           ASEG       4E8 
+RES2_H              ABS    CONST UNTYP.           ASEG       4E9 
+RES2_L              ABS    CONST UNTYP.           ASEG       4E8 
+RES3                ABS    CONST UNTYP.           ASEG       4EA 
+RES3_H              ABS    CONST UNTYP.           ASEG       4EB 
+RES3_L              ABS    CONST UNTYP.           ASEG       4EA 
+RESHI               ABS    CONST UNTYP.           ASEG       4CC 
+RESHI_H             ABS    CONST UNTYP.           ASEG       4CD 
+RESHI_L             ABS    CONST UNTYP.           ASEG       4CC 
+RESLO               ABS    CONST UNTYP.           ASEG       4CA 
+RESLO_H             ABS    CONST UNTYP.           ASEG       4CB 
+RESLO_L             ABS    CONST UNTYP.           ASEG       4CA 
+REVEAL              REL    CONST PUB UNTYP.       CODE       1278 
+RFETCH              REL    CONST PUB UNTYP.       CODE       182 
+RFROM               REL    CONST PUB UNTYP.       CODE       16E 
+RIGHTBRACKET        REL    CONST PUB UNTYP.       CODE       1244 
+ROMDICT             ABS    CONST EXT [-001] UNTYP. __EXTERNS  Solved Extern 
+ROT                 REL    CONST PUB UNTYP.       CODE       134 
+RPFETCH             REL    CONST PUB UNTYP.       CODE       1C0 
+RPSTORE             REL    CONST PUB UNTYP.       CODE       1D6 
+RSHIFT              REL    CONST PUB UNTYP.       CODE       33E 
+RSH_1               REL    CONST UNTYP.           CODE       348 
+RSH_X               REL    CONST UNTYP.           CODE       350 
+RSTACK              ABS    CONST EXT [005] UNTYP. __EXTERNS  Solved Extern 
+RTCADOWDAY          ABS    CONST UNTYP.           ASEG       4BA 
+RTCADOWDAY_H        ABS    CONST UNTYP.           ASEG       4BB 
+RTCADOWDAY_L        ABS    CONST UNTYP.           ASEG       4BA 
+RTCAMINHR           ABS    CONST UNTYP.           ASEG       4B8 
+RTCAMINHR_H         ABS    CONST UNTYP.           ASEG       4B9 
+RTCAMINHR_L         ABS    CONST UNTYP.           ASEG       4B8 
+RTCCTL01            ABS    CONST UNTYP.           ASEG       4A0 
+RTCCTL01_H          ABS    CONST UNTYP.           ASEG       4A1 
+RTCCTL01_L          ABS    CONST UNTYP.           ASEG       4A0 
+RTCCTL23            ABS    CONST UNTYP.           ASEG       4A2 
+RTCCTL23_H          ABS    CONST UNTYP.           ASEG       4A3 
+RTCCTL23_L          ABS    CONST UNTYP.           ASEG       4A2 
+RTCDATE             ABS    CONST UNTYP.           ASEG       4B4 
+RTCDATE_H           ABS    CONST UNTYP.           ASEG       4B5 
+RTCDATE_L           ABS    CONST UNTYP.           ASEG       4B4 
+RTCIV               ABS    CONST UNTYP.           ASEG       4AE 
+RTCPS               ABS    CONST UNTYP.           ASEG       4AC 
+RTCPS0CTL           ABS    CONST UNTYP.           ASEG       4A8 
+RTCPS0CTL_H         ABS    CONST UNTYP.           ASEG       4A9 
+RTCPS0CTL_L         ABS    CONST UNTYP.           ASEG       4A8 
+RTCPS1CTL           ABS    CONST UNTYP.           ASEG       4AA 
+RTCPS1CTL_H         ABS    CONST UNTYP.           ASEG       4AB 
+RTCPS1CTL_L         ABS    CONST UNTYP.           ASEG       4AA 
+RTCPS_H             ABS    CONST UNTYP.           ASEG       4AD 
+RTCPS_L             ABS    CONST UNTYP.           ASEG       4AC 
+RTCTIM0             ABS    CONST UNTYP.           ASEG       4B0 
+RTCTIM0_H           ABS    CONST UNTYP.           ASEG       4B1 
+RTCTIM0_L           ABS    CONST UNTYP.           ASEG       4B0 
+RTCTIM1             ABS    CONST UNTYP.           ASEG       4B2 
+RTCTIM1_H           ABS    CONST UNTYP.           ASEG       4B3 
+RTCTIM1_L           ABS    CONST UNTYP.           ASEG       4B2 
+RTCYEAR             ABS    CONST UNTYP.           ASEG       4B6 
+RTCYEAR_H           ABS    CONST UNTYP.           ASEG       4B7 
+RTCYEAR_L           ABS    CONST UNTYP.           ASEG       4B6 
+RZERO               REL    CONST PUB UNTYP.       CODE       856 
+S0                  REL    CONST PUB UNTYP.       CODE       860 
+SCAN                REL    CONST PUB UNTYP.       CODE       5B4 
+SCAN_1              REL    CONST UNTYP.           CODE       5BE 
+SCAN_X              REL    CONST UNTYP.           CODE       5C8 
+SEMICOLON           REL    CONST PUB UNTYP.       CODE       12BA 
+SEQUAL              REL    CONST PUB UNTYP.       CODE       5D8 
+SEQU_1              REL    CONST UNTYP.           CODE       5E2 
+SEQU_X              REL    CONST UNTYP.           CODE       5F6 
+SFRIE1              ABS    CONST UNTYP.           ASEG       100 
+SFRIE1_H            ABS    CONST UNTYP.           ASEG       101 
+SFRIE1_L            ABS    CONST UNTYP.           ASEG       100 
+SFRIFG1             ABS    CONST UNTYP.           ASEG       102 
+SFRIFG1_H           ABS    CONST UNTYP.           ASEG       103 
+SFRIFG1_L           ABS    CONST UNTYP.           ASEG       102 
+SFRRPCR             ABS    CONST UNTYP.           ASEG       104 
+SFRRPCR_H           ABS    CONST UNTYP.           ASEG       105 
+SFRRPCR_L           ABS    CONST UNTYP.           ASEG       104 
+SIGN                REL    CONST PUB UNTYP.       CODE       CF2 
+SIGN1               REL    CONST UNTYP.           CODE       D00 
+SKIP                REL    CONST PUB UNTYP.       CODE       58E 
+SKIP_1              REL    CONST UNTYP.           CODE       598 
+SKIP_X              REL    CONST UNTYP.           CODE       5A2 
+SLASH               REL    CONST PUB UNTYP.       CODE       9D4 
+SLASHMOD            REL    CONST PUB UNTYP.       CODE       9C2 
+SLASHSTRING         REL    CONST PUB UNTYP.       CODE       DD2 
+SMAL0               REL    CONST UNTYP.           CODE       17E4 
+SMALend             REL    CONST UNTYP.           CODE       17E8 
+SMALstart           REL    CONST UNTYP.           CODE       17E5 
+SMISMATCH           REL    CONST UNTYP.           CODE       5F0 
+SMSLASHREM          REL    CONST PUB UNTYP.       CODE       958 
+SOURCE              REL    CONST PUB UNTYP.       CODE       DBE 
+SPACE               REL    CONST PUB UNTYP.       CODE       AF0 
+SPACES              REL    CONST PUB UNTYP.       CODE       B02 
+SPCS1               REL    CONST UNTYP.           CODE       B04 
+SPCS2               REL    CONST UNTYP.           CODE       B12 
+SPFETCH             REL    CONST PUB UNTYP.       CODE       198 
+SPSTORE             REL    CONST PUB UNTYP.       CODE       1AE 
+SQUOTE              REL    CONST PUB UNTYP.       CODE       BF0 
+SSMOD               REL    CONST PUB UNTYP.       CODE       9F6 
+STAR                REL    CONST PUB UNTYP.       CODE       9B2 
+STARSLASH           REL    CONST PUB UNTYP.       CODE       A08 
+STATE               REL    CONST PUB UNTYP.       CODE       7D2 
+STOD                REL    CONST PUB UNTYP.       CODE       8BA 
+STORCOLON           REL    CONST PUB UNTYP.       CODE       736 
+STORE               REL    CONST PUB UNTYP.       CODE       204 
+STORECF             REL    CONST PUB UNTYP.       CODE       6E8 
+STOREDEST           REL    CONST PUB UNTYP.       CODE       788 
+STORELEDS           REL    CONST PUB UNTYP.       CODE       1774 
+SUMEXT              ABS    CONST UNTYP.           ASEG       4CE 
+SUMEXT_H            ABS    CONST UNTYP.           ASEG       4CF 
+SUMEXT_L            ABS    CONST UNTYP.           ASEG       4CE 
+SWAP                REL    CONST PUB UNTYP.       CODE       106 
+SWAPBYTES           REL    CONST PUB UNTYP.       CODE       2F0 
+SYSBERRIV           ABS    CONST UNTYP.           ASEG       198 
+SYSBERRIV_H         ABS    CONST UNTYP.           ASEG       199 
+SYSBERRIV_L         ABS    CONST UNTYP.           ASEG       198 
+SYSBSLC             ABS    CONST UNTYP.           ASEG       182 
+SYSBSLC_H           ABS    CONST UNTYP.           ASEG       183 
+SYSBSLC_L           ABS    CONST UNTYP.           ASEG       182 
+SYSCTL              ABS    CONST UNTYP.           ASEG       180 
+SYSCTL_H            ABS    CONST UNTYP.           ASEG       181 
+SYSCTL_L            ABS    CONST UNTYP.           ASEG       180 
+SYSJMBC             ABS    CONST UNTYP.           ASEG       186 
+SYSJMBC_H           ABS    CONST UNTYP.           ASEG       187 
+SYSJMBC_L           ABS    CONST UNTYP.           ASEG       186 
+SYSJMBI0            ABS    CONST UNTYP.           ASEG       188 
+SYSJMBI0_H          ABS    CONST UNTYP.           ASEG       189 
+SYSJMBI0_L          ABS    CONST UNTYP.           ASEG       188 
+SYSJMBI1            ABS    CONST UNTYP.           ASEG       18A 
+SYSJMBI1_H          ABS    CONST UNTYP.           ASEG       18B 
+SYSJMBI1_L          ABS    CONST UNTYP.           ASEG       18A 
+SYSJMBO0            ABS    CONST UNTYP.           ASEG       18C 
+SYSJMBO0_H          ABS    CONST UNTYP.           ASEG       18D 
+SYSJMBO0_L          ABS    CONST UNTYP.           ASEG       18C 
+SYSJMBO1            ABS    CONST UNTYP.           ASEG       18E 
+SYSJMBO1_H          ABS    CONST UNTYP.           ASEG       18F 
+SYSJMBO1_L          ABS    CONST UNTYP.           ASEG       18E 
+SYSRSTIV            ABS    CONST UNTYP.           ASEG       19E 
+SYSRSTIV_H          ABS    CONST UNTYP.           ASEG       19F 
+SYSRSTIV_L          ABS    CONST UNTYP.           ASEG       19E 
+SYSSNIV             ABS    CONST UNTYP.           ASEG       19C 
+SYSSNIV_H           ABS    CONST UNTYP.           ASEG       19D 
+SYSSNIV_L           ABS    CONST UNTYP.           ASEG       19C 
+SYSUNIV             ABS    CONST UNTYP.           ASEG       19A 
+SYSUNIV_H           ABS    CONST UNTYP.           ASEG       19B 
+SYSUNIV_L           ABS    CONST UNTYP.           ASEG       19A 
+TA0CCR0             ABS    CONST UNTYP.           ASEG       352 
+TA0CCR1             ABS    CONST UNTYP.           ASEG       354 
+TA0CCR2             ABS    CONST UNTYP.           ASEG       356 
+TA0CCTL0            ABS    CONST UNTYP.           ASEG       342 
+TA0CCTL1            ABS    CONST UNTYP.           ASEG       344 
+TA0CCTL2            ABS    CONST UNTYP.           ASEG       346 
+TA0CTL              ABS    CONST UNTYP.           ASEG       340 
+TA0EX0              ABS    CONST UNTYP.           ASEG       360 
+TA0IV               ABS    CONST UNTYP.           ASEG       36E 
+TA0R                ABS    CONST UNTYP.           ASEG       350 
+TA1CCR0             ABS    CONST UNTYP.           ASEG       392 
+TA1CCR1             ABS    CONST UNTYP.           ASEG       394 
+TA1CCR2             ABS    CONST UNTYP.           ASEG       396 
+TA1CCTL0            ABS    CONST UNTYP.           ASEG       382 
+TA1CCTL1            ABS    CONST UNTYP.           ASEG       384 
+TA1CCTL2            ABS    CONST UNTYP.           ASEG       386 
+TA1CTL              ABS    CONST UNTYP.           ASEG       380 
+TA1EX0              ABS    CONST UNTYP.           ASEG       3A0 
+TA1IV               ABS    CONST UNTYP.           ASEG       3AE 
+TA1R                ABS    CONST UNTYP.           ASEG       390 
+TASK                REL    CONST PUB UNTYP.       CODE       1840 
+TB0CCR0             ABS    CONST UNTYP.           ASEG       3D2 
+TB0CCR1             ABS    CONST UNTYP.           ASEG       3D4 
+TB0CCR2             ABS    CONST UNTYP.           ASEG       3D6 
+TB0CCTL0            ABS    CONST UNTYP.           ASEG       3C2 
+TB0CCTL1            ABS    CONST UNTYP.           ASEG       3C4 
+TB0CCTL2            ABS    CONST UNTYP.           ASEG       3C6 
+TB0CTL              ABS    CONST UNTYP.           ASEG       3C0 
+TB0EX0              ABS    CONST UNTYP.           ASEG       3E0 
+TB0IV               ABS    CONST UNTYP.           ASEG       3EE 
+TB0R                ABS    CONST UNTYP.           ASEG       3D0 
+TB1CCR0             ABS    CONST UNTYP.           ASEG       412 
+TB1CCR1             ABS    CONST UNTYP.           ASEG       414 
+TB1CCR2             ABS    CONST UNTYP.           ASEG       416 
+TB1CCTL0            ABS    CONST UNTYP.           ASEG       402 
+TB1CCTL1            ABS    CONST UNTYP.           ASEG       404 
+TB1CCTL2            ABS    CONST UNTYP.           ASEG       406 
+TB1CTL              ABS    CONST UNTYP.           ASEG       400 
+TB1EX0              ABS    CONST UNTYP.           ASEG       420 
+TB1IV               ABS    CONST UNTYP.           ASEG       42E 
+TB1R                ABS    CONST UNTYP.           ASEG       410 
+TB2CCR0             ABS    CONST UNTYP.           ASEG       452 
+TB2CCR1             ABS    CONST UNTYP.           ASEG       454 
+TB2CCR2             ABS    CONST UNTYP.           ASEG       456 
+TB2CCTL0            ABS    CONST UNTYP.           ASEG       442 
+TB2CCTL1            ABS    CONST UNTYP.           ASEG       444 
+TB2CCTL2            ABS    CONST UNTYP.           ASEG       446 
+TB2CTL              ABS    CONST UNTYP.           ASEG       440 
+TB2EX0              ABS    CONST UNTYP.           ASEG       460 
+TB2IV               ABS    CONST UNTYP.           ASEG       46E 
+TB2R                ABS    CONST UNTYP.           ASEG       450 
+THEN                REL    CONST PUB UNTYP.       CODE       1330 
+TIB                 REL    CONST PUB UNTYP.       CODE       86C 
+TIBAREA             ABS    CONST EXT [006] UNTYP. __EXTERNS  Solved Extern 
+TIBSIZE             REL    CONST PUB UNTYP.       CODE       87C 
+TIB_SIZE            ABS    CONST EXT [007] UNTYP. __EXTERNS  Solved Extern 
+TICK                REL    CONST PUB UNTYP.       CODE       1134 
+TICKSOURCE          REL    CONST PUB UNTYP.       CODE       7EC 
+TOBODY              REL    CONST PUB UNTYP.       CODE       6CE 
+TOCOUNTED           REL    CONST PUB UNTYP.       CODE       DEE 
+TODIGIT             REL    CONST PUB UNTYP.       CODE       C8E 
+TOIN                REL    CONST PUB UNTYP.       CODE       7B8 
+TOL                 REL    CONST PUB UNTYP.       CODE       13BA 
+TONUM1              REL    CONST UNTYP.           CODE       F90 
+TONUM2              REL    CONST UNTYP.           CODE       FA6 
+TONUM3              REL    CONST UNTYP.           CODE       FC0 
+TONUMBER            REL    CONST PUB UNTYP.       CODE       F8E 
+TOR                 REL    CONST PUB UNTYP.       CODE       15E 
+TOSFALSE            REL    CONST UNTYP.           CODE       386 
+TOSTRUE             REL    CONST UNTYP.           CODE       3A8 
+TRUE                REL    CONST PUB UNTYP.       CODE       1530 
+TUCK                REL    CONST PUB UNTYP.       CODE       1E8 
+TWODROP             REL    CONST PUB UNTYP.       CODE       A72 
+TWODUP              REL    CONST PUB UNTYP.       CODE       A82 
+TWOFETCH            REL    CONST PUB UNTYP.       CODE       A46 
+TWOOVER             REL    CONST PUB UNTYP.       CODE       AAA 
+TWOSLASH            REL    CONST PUB UNTYP.       CODE       30C 
+TWOSTAR             REL    CONST PUB UNTYP.       CODE       2FE 
+TWOSTORE            REL    CONST PUB UNTYP.       CODE       A5A 
+TWOSWAP             REL    CONST PUB UNTYP.       CODE       A94 
+TYP3                REL    CONST UNTYP.           CODE       BC0 
+TYP4                REL    CONST UNTYP.           CODE       BCE 
+TYP5                REL    CONST UNTYP.           CODE       BD0 
+TYPE                REL    CONST PUB UNTYP.       CODE       BB0 
+U0                  REL    CONST PUB UNTYP.       CODE       7AC 
+UAREA               ABS    CONST EXT [001] UNTYP. __EXTERNS  Solved Extern 
+UAREA_SIZE          ABS    CONST EXT [008] UNTYP. __EXTERNS  Solved Extern 
+UCA0ABCTL           ABS    CONST UNTYP.           ASEG       5D0 
+UCA0BRW             ABS    CONST UNTYP.           ASEG       5C6 
+UCA0BRW_H           ABS    CONST UNTYP.           ASEG       5C7 
+UCA0BRW_L           ABS    CONST UNTYP.           ASEG       5C6 
+UCA0CTLW0           ABS    CONST UNTYP.           ASEG       5C0 
+UCA0CTLW0_H         ABS    CONST UNTYP.           ASEG       5C1 
+UCA0CTLW0_L         ABS    CONST UNTYP.           ASEG       5C0 
+UCA0CTLW1           ABS    CONST UNTYP.           ASEG       5C2 
+UCA0CTLW1_H         ABS    CONST UNTYP.           ASEG       5C3 
+UCA0CTLW1_L         ABS    CONST UNTYP.           ASEG       5C2 
+UCA0IE              ABS    CONST UNTYP.           ASEG       5DA 
+UCA0IE_H            ABS    CONST UNTYP.           ASEG       5DB 
+UCA0IE_L            ABS    CONST UNTYP.           ASEG       5DA 
+UCA0IFG             ABS    CONST UNTYP.           ASEG       5DC 
+UCA0IFG_H           ABS    CONST UNTYP.           ASEG       5DD 
+UCA0IFG_L           ABS    CONST UNTYP.           ASEG       5DC 
+UCA0IRCTL           ABS    CONST UNTYP.           ASEG       5D2 
+UCA0IRCTL_H         ABS    CONST UNTYP.           ASEG       5D3 
+UCA0IRCTL_L         ABS    CONST UNTYP.           ASEG       5D2 
+UCA0IV              ABS    CONST UNTYP.           ASEG       5DE 
+UCA0MCTLW           ABS    CONST UNTYP.           ASEG       5C8 
+UCA0MCTLW_H         ABS    CONST UNTYP.           ASEG       5C9 
+UCA0MCTLW_L         ABS    CONST UNTYP.           ASEG       5C8 
+UCA0RXBUF           ABS    CONST UNTYP.           ASEG       5CC 
+UCA0RXBUF_H         ABS    CONST UNTYP.           ASEG       5CD 
+UCA0RXBUF_L         ABS    CONST UNTYP.           ASEG       5CC 
+UCA0STATW           ABS    CONST UNTYP.           ASEG       5CA 
+UCA0TXBUF           ABS    CONST UNTYP.           ASEG       5CE 
+UCA0TXBUF_H         ABS    CONST UNTYP.           ASEG       5CF 
+UCA0TXBUF_L         ABS    CONST UNTYP.           ASEG       5CE 
+UCA1ABCTL           ABS    CONST UNTYP.           ASEG       5F0 
+UCA1BRW             ABS    CONST UNTYP.           ASEG       5E6 
+UCA1BRW_H           ABS    CONST UNTYP.           ASEG       5E7 
+UCA1BRW_L           ABS    CONST UNTYP.           ASEG       5E6 
+UCA1CTLW0           ABS    CONST UNTYP.           ASEG       5E0 
+UCA1CTLW0_H         ABS    CONST UNTYP.           ASEG       5E1 
+UCA1CTLW0_L         ABS    CONST UNTYP.           ASEG       5E0 
+UCA1CTLW1           ABS    CONST UNTYP.           ASEG       5E2 
+UCA1CTLW1_H         ABS    CONST UNTYP.           ASEG       5E3 
+UCA1CTLW1_L         ABS    CONST UNTYP.           ASEG       5E2 
+UCA1IE              ABS    CONST UNTYP.           ASEG       5FA 
+UCA1IE_H            ABS    CONST UNTYP.           ASEG       5FB 
+UCA1IE_L            ABS    CONST UNTYP.           ASEG       5FA 
+UCA1IFG             ABS    CONST UNTYP.           ASEG       5FC 
+UCA1IFG_H           ABS    CONST UNTYP.           ASEG       5FD 
+UCA1IFG_L           ABS    CONST UNTYP.           ASEG       5FC 
+UCA1IRCTL           ABS    CONST UNTYP.           ASEG       5F2 
+UCA1IRCTL_H         ABS    CONST UNTYP.           ASEG       5F3 
+UCA1IRCTL_L         ABS    CONST UNTYP.           ASEG       5F2 
+UCA1IV              ABS    CONST UNTYP.           ASEG       5FE 
+UCA1MCTLW           ABS    CONST UNTYP.           ASEG       5E8 
+UCA1MCTLW_H         ABS    CONST UNTYP.           ASEG       5E9 
+UCA1MCTLW_L         ABS    CONST UNTYP.           ASEG       5E8 
+UCA1RXBUF           ABS    CONST UNTYP.           ASEG       5EC 
+UCA1RXBUF_H         ABS    CONST UNTYP.           ASEG       5ED 
+UCA1RXBUF_L         ABS    CONST UNTYP.           ASEG       5EC 
+UCA1STATW           ABS    CONST UNTYP.           ASEG       5EA 
+UCA1TXBUF           ABS    CONST UNTYP.           ASEG       5EE 
+UCA1TXBUF_H         ABS    CONST UNTYP.           ASEG       5EF 
+UCA1TXBUF_L         ABS    CONST UNTYP.           ASEG       5EE 
+UCB0ADDMASK         ABS    CONST UNTYP.           ASEG       65E 
+UCB0ADDMASK_H       ABS    CONST UNTYP.           ASEG       65F 
+UCB0ADDMASK_L       ABS    CONST UNTYP.           ASEG       65E 
+UCB0ADDRX           ABS    CONST UNTYP.           ASEG       65C 
+UCB0ADDRX_H         ABS    CONST UNTYP.           ASEG       65D 
+UCB0ADDRX_L         ABS    CONST UNTYP.           ASEG       65C 
+UCB0BRW             ABS    CONST UNTYP.           ASEG       646 
+UCB0BRW_H           ABS    CONST UNTYP.           ASEG       647 
+UCB0BRW_L           ABS    CONST UNTYP.           ASEG       646 
+UCB0CTLW0           ABS    CONST UNTYP.           ASEG       640 
+UCB0CTLW0_H         ABS    CONST UNTYP.           ASEG       641 
+UCB0CTLW0_L         ABS    CONST UNTYP.           ASEG       640 
+UCB0CTLW1           ABS    CONST UNTYP.           ASEG       642 
+UCB0CTLW1_H         ABS    CONST UNTYP.           ASEG       643 
+UCB0CTLW1_L         ABS    CONST UNTYP.           ASEG       642 
+UCB0I2COA0          ABS    CONST UNTYP.           ASEG       654 
+UCB0I2COA0_H        ABS    CONST UNTYP.           ASEG       655 
+UCB0I2COA0_L        ABS    CONST UNTYP.           ASEG       654 
+UCB0I2COA1          ABS    CONST UNTYP.           ASEG       656 
+UCB0I2COA1_H        ABS    CONST UNTYP.           ASEG       657 
+UCB0I2COA1_L        ABS    CONST UNTYP.           ASEG       656 
+UCB0I2COA2          ABS    CONST UNTYP.           ASEG       658 
+UCB0I2COA2_H        ABS    CONST UNTYP.           ASEG       659 
+UCB0I2COA2_L        ABS    CONST UNTYP.           ASEG       658 
+UCB0I2COA3          ABS    CONST UNTYP.           ASEG       65A 
+UCB0I2COA3_H        ABS    CONST UNTYP.           ASEG       65B 
+UCB0I2COA3_L        ABS    CONST UNTYP.           ASEG       65A 
+UCB0I2CSA           ABS    CONST UNTYP.           ASEG       660 
+UCB0I2CSA_H         ABS    CONST UNTYP.           ASEG       661 
+UCB0I2CSA_L         ABS    CONST UNTYP.           ASEG       660 
+UCB0IE              ABS    CONST UNTYP.           ASEG       66A 
+UCB0IE_H            ABS    CONST UNTYP.           ASEG       66B 
+UCB0IE_L            ABS    CONST UNTYP.           ASEG       66A 
+UCB0IFG             ABS    CONST UNTYP.           ASEG       66C 
+UCB0IFG_H           ABS    CONST UNTYP.           ASEG       66D 
+UCB0IFG_L           ABS    CONST UNTYP.           ASEG       66C 
+UCB0IV              ABS    CONST UNTYP.           ASEG       66E 
+UCB0RXBUF           ABS    CONST UNTYP.           ASEG       64C 
+UCB0RXBUF_H         ABS    CONST UNTYP.           ASEG       64D 
+UCB0RXBUF_L         ABS    CONST UNTYP.           ASEG       64C 
+UCB0STATW           ABS    CONST UNTYP.           ASEG       648 
+UCB0STATW_H         ABS    CONST UNTYP.           ASEG       649 
+UCB0STATW_L         ABS    CONST UNTYP.           ASEG       648 
+UCB0TBCNT           ABS    CONST UNTYP.           ASEG       64A 
+UCB0TBCNT_H         ABS    CONST UNTYP.           ASEG       64B 
+UCB0TBCNT_L         ABS    CONST UNTYP.           ASEG       64A 
+UCB0TXBUF           ABS    CONST UNTYP.           ASEG       64E 
+UCB0TXBUF_H         ABS    CONST UNTYP.           ASEG       64F 
+UCB0TXBUF_L         ABS    CONST UNTYP.           ASEG       64E 
+UDOT                REL    CONST PUB UNTYP.       CODE       D08 
+UDOTR               REL    CONST PUB UNTYP.       CODE       1586 
+UDSLASHMOD          REL    CONST PUB UNTYP.       CODE       C24 
+UDSTAR              REL    CONST PUB UNTYP.       CODE       C44 
+UGREATER            REL    CONST PUB UNTYP.       CODE       3D2 
+ULESS               REL    CONST PUB UNTYP.       CODE       3C2 
+UMAX                REL    CONST PUB UNTYP.       CODE       B36 
+UMAX1               REL    CONST UNTYP.           CODE       B42 
+UMIN                REL    CONST PUB UNTYP.       CODE       B1E 
+UMIN1               REL    CONST UNTYP.           CODE       B2A 
+UMSLASHMOD          REL    CONST PUB UNTYP.       CODE       4E4 
+UMSTAR              REL    CONST PUB UNTYP.       CODE       4B4 
+UNLOOP              REL    CONST PUB UNTYP.       CODE       4A2 
+UNTIL               REL    CONST PUB UNTYP.       CODE       136E 
+UP                  ABS    CONST EXT [000] UNTYP. __EXTERNS  Solved Extern 
+USER                REL    CONST PUB UNTYP.       CODE       98 
+VARIABLE            REL    CONST PUB UNTYP.       CODE       4E 
+VECS_SIZE           ABS    CONST EXT [-001] UNTYP. __EXTERNS  Solved Extern 
+WARM                REL    CONST PUB UNTYP.       CODE       1758 
+WARMIP              REL    CONST PUB UNTYP.       CODE       175A 
+WDS1                REL    CONST UNTYP.           CODE       1560 
+WDTCTL              ABS    CONST UNTYP.           ASEG       15C 
+WDTCTL_H            ABS    CONST UNTYP.           ASEG       15D 
+WDTCTL_L            ABS    CONST UNTYP.           ASEG       15C 
+WHILE               REL    CONST PUB UNTYP.       CODE       139A 
+WITHIN              REL    CONST PUB UNTYP.       CODE       146C 
+WORD1               REL    CONST UNTYP.           CODE       E28 
+WORDD               REL    CONST PUB UNTYP.       CODE       E04 
+WORDS               REL    CONST PUB UNTYP.       CODE       1558 
+XDOES               REL    CONST PUB UNTYP.       CODE       11EC 
+XMAGIC              REL    CONST PUB UNTYP.       CODE       17CA 
+XORR                REL    CONST PUB UNTYP.       CODE       2A0 
+XSMAL               REL    CONST PUB UNTYP.       CODE       17E0 
+XSQUOTE             REL    CONST PUB UNTYP.       CODE       BDA 
+ZEROEQUAL           REL    CONST PUB UNTYP.       CODE       35C 
+ZEROLESS            REL    CONST PUB UNTYP.       CODE       36C 
+__MSP430G2211__     ABS    CONST UNTYP.           ASEG       Not solved 
+bran                REL    CONST PUB UNTYP.       CODE       3E4 
+clip1               REL    CONST UNTYP.           CODE       17AE 
+cory                ABS    CONST EXT [012] UNTYP. __EXTERNS  Solved Extern 
+dcn                 REL    CONST PUB UNTYP.       CODE       1720 
+dobran              REL    CONST UNTYP.           CODE       3E6 
+docreate            REL    CONST PUB UNTYP.       CODE       58 
+dodoes              REL    CONST PUB UNTYP.       CODE       B4 
+donext              REL    CONST UNTYP.           CODE       636 
+donoop              REL    CONST PUB UNTYP.       CODE       636 
+fenceadr            REL    CONST PUB UNTYP.       CODE       1838 
+fram                REL    CONST PUB UNTYP.       CODE       182E 
+ftest               ABS    CONST EXT [014] UNTYP. __EXTERNS  Solved Extern 
+initDECON           ABS    CONST EXT [009] UNTYP. __EXTERNS  Solved Extern 
+intvecs             ABS    CONST EXT [011] UNTYP. __EXTERNS  Solved Extern 
+lastword            REL    CONST PUB UNTYP.       CODE       183B 
+link                REL    VAR UNTYP.             CODE       183B 
+lit                 REL    CONST PUB UNTYP.       CODE       1C 
+magic0              REL    CONST UNTYP.           CODE       17CE 
+magicend            REL    CONST UNTYP.           CODE       17D7 
+magicstart          REL    CONST UNTYP.           CODE       17CF 
+ms1                 REL    CONST UNTYP.           CODE       150E 
+nullirq             ABS    CONST EXT [-001] UNTYP. __EXTERNS  Solved Extern 
+onems1              REL    CONST UNTYP.           CODE       14EC 
+onems2              REL    CONST UNTYP.           CODE       14F6 
+qbran               REL    CONST PUB UNTYP.       CODE       3F8 
+rtest               ABS    CONST EXT [013] UNTYP. __EXTERNS  Solved Extern 
+runmagic            REL    CONST PUB UNTYP.       CODE       17F4 
+runsmal             REL    CONST PUB UNTYP.       CODE       180A 
+sram                REL    CONST PUB UNTYP.       CODE       181C 
+srtA                ABS    CONST EXT [-001] UNTYP. __EXTERNS  Solved Extern 
+xdo                 REL    CONST PUB UNTYP.       CODE       40E 
+xloop               REL    CONST PUB UNTYP.       CODE       434 
+xplusloop           REL    CONST PUB UNTYP.       CODE       454 
+
+
+##############################
+#          CRC:4BF2          #
+#        Errors:   0         #
+#        Warnings: 0         #
+#        Bytes: 6212         #
+##############################
+
+
+
+

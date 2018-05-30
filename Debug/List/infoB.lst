@@ -1,0 +1,124 @@
+###############################################################################
+#                                                                             #
+#     IAR Assembler V6.40.1.950/W32  for MSP430 31/May/2018  01:38:26         #
+#     Copyright 1996-2015 IAR Systems AB.                                     #
+#                                                                             #
+#           Target option =  MSP430X                                          #
+#           Source file   =  C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\infoB.s43#
+#           List file     =  C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\Debug\List\infoB.lst#
+#           Object file   =  C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\Debug\Obj\infoB.r43#
+#           Command line  =  C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\infoB.s43 #
+#                            -OC:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\Debug\Obj #
+#                            -s+ -M<> -w+                                     #
+#                            -LC:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\Debug\List #
+#                            -t8 -x -r -D__MSP430FR5739__ -v1 --data_model    #
+#                            small --code_model large                         #
+#                            -IC:\Program Files (x86)\IAR Systems\Embedded Workbench 7.3\430\INC\ #
+#                                                                             #
+###############################################################################
+
+      1    000000              ; infoA user area tables
+      2    000000              
+      3    000000                      EXTERN  lastword,ROMDICT,fenceadr,NOOP
+      4    000000                      EXTERN  runmagic,runsmal
+      5    000000                      PUBLIC  initDECON,cory,UAREA,UP,ftest
+      6    000000              
+      7    000000                      RSEG    INFOB
+      8    000000              
+      9    000000 0000         UP:     DW 0
+     10    000002              
+     11    000002                          ; user area 
+     12    000002 000000001000*UAREA:  DW 0,0,16,0     ; reserved,>IN,BASE,STAT
+                                                       E
+     13    00000A ....                 DW ROMDICT      ; DP
+     14    00000C 00000000             DW 0,0          ; SOURCE init'd
+                                                        elsewhere
+     15    000010 ....                 DW lastword     ; LATEST
+     16    000012 00000000             DW 0,0          ; HP,LP init'd
+                                                        elsewhere; HP=Hold
+                                                        LP=leave stack
+                                                        pointer
+     17    000016 ....         appA:   DW runsmal         ; default app for new
+                                                           FRAMed system
+                                                           ;mk
+     18    000018 0000                 DW 0            ; NEWEST not init'd
+     19    00001A ....                 DW fenceadr     ; FENCE for FORGET
+     20    00001C 000000000000         DW 0,0,0        ; user variables
+                                                        TBD
+     21    000022              
+     22    000022              initDECON:  ; delivery condition of user
+                                area
+     23    000022 000000001000*        DW 0,0,16,0     ; reserved,>IN,BASE,STAT
+                                                       E
+     24    00002A ....                 DW ROMDICT      ; DP
+     25    00002C 00000000             DW 0,0          ; SOURCE init'd
+                                                        elsewhere
+     26    000030 ....                 DW lastword     ; LATEST
+     27    000032 00000000             DW 0,0          ; HP,LP init'd
+                                                        elsewhere; HP=Hold
+                                                        LP=leave stack
+                                                        pointer
+     28    000036 ....         appB:   DW runmagic         ; is default app
+                                                            ;mk
+     29    000038 0000                 DW 0            ; NEWEST not init'd
+     30    00003A ....                 DW fenceadr     ; FENCE for FORGET
+     31    00003C 000000000000         DW 0,0,0        ; user variables
+                                                        TBD
+     32    000042              
+     33    000042 0000         cory:   DW 0   ; cause of reset; its a copy of
+                                               SYSRSTIV done by init.
+     34    000044 0000         ftest:  DW 0
+     35    000046              
+     36    000046              
+     37    000046              
+     38    000046              ; version string ===============================
+                               ============
+     39    000046              
+     40    000000                      PUBLIC  CFver
+     41    000046              
+     42    000046 30           CFver:  DB CFverend-CFver
+     43    000047 434634333046*        DB 'CF430FR V0.2exp'
+     44    000056              ;        DB $0D,$0A
+     45    000056              ;        DB 'CamelForth for MSP-EXP430FR5739'
+     46    000056 0D0A                 DB $0D,$0A
+     47    000058 6275696C643A*        DB 'build: ',__DATE__,' ',__TIME__
+     48    000075 00                   EVEN
+     49    000076              CFverend:   
+     50    000076              
+     51    000076              END
+
+
+
+Segment             Type 	Mode
+----------------------------------------
+INFOB               UNTYPED  	REL 
+
+Label               Mode   Type                   Segment    Value/Offset
+------------------------------------------------------------------------------
+CFver               REL    CONST PUB UNTYP.       INFOB      46 
+CFverend            REL    CONST UNTYP.           INFOB      76 
+NOOP                ABS    CONST EXT [-001] UNTYP. __EXTERNS  Solved Extern 
+ROMDICT             ABS    CONST EXT [001] UNTYP. __EXTERNS  Solved Extern 
+UAREA               REL    CONST PUB UNTYP.       INFOB      2 
+UP                  REL    CONST PUB UNTYP.       INFOB      0 
+appA                REL    CONST UNTYP.           INFOB      16 
+appB                REL    CONST UNTYP.           INFOB      36 
+cory                REL    CONST PUB UNTYP.       INFOB      42 
+fenceadr            ABS    CONST EXT [002] UNTYP. __EXTERNS  Solved Extern 
+ftest               REL    CONST PUB UNTYP.       INFOB      44 
+initDECON           REL    CONST PUB UNTYP.       INFOB      22 
+lastword            ABS    CONST EXT [000] UNTYP. __EXTERNS  Solved Extern 
+runmagic            ABS    CONST EXT [003] UNTYP. __EXTERNS  Solved Extern 
+runsmal             ABS    CONST EXT [004] UNTYP. __EXTERNS  Solved Extern 
+
+
+##############################
+#          CRC:5CA           #
+#        Errors:   0         #
+#        Warnings: 0         #
+#         Bytes: 118         #
+##############################
+
+
+
+

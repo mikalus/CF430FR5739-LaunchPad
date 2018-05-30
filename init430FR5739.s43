@@ -1,0 +1,325 @@
+; CPU Configuration - MSP430FR5739  ; M.Kalus Juli 2011
+; Template was: init430f1611.s43 
+; for TI MSP430F1611 by B. Rodriguez  3 Jan 09
+
+; ----------------------------------------------------------------------
+; CamelForth for the Texas Instruments MSP430 
+; (c) 2009 Bradford J. Rodriguez.
+; 
+; This program is free software; you can redistribute it and/or modify
+; it under the terms of the GNU General Public License as published by
+; the Free Software Foundation; either version 3 of the License, or
+; (at your option) any later version.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+; GNU General Public License for more details.
+;
+; You should have received a copy of the GNU General Public License
+; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;
+; Commercial inquiries should be directed to the author at 
+; 115 First St., #105, Collingwood, Ontario L9Y 4W3 Canada
+; or via email to bj@camelforth.com
+
+; ----------------------------------------------------------------------
+; This configuration is for the Texas Instrument (TI)
+; MSP-EXP430FR5739 FRAM Experimentation board, 
+; and its TI MSP430FR5739 microcontroller.
+; It has this I/O assignments:
+
+; J3 (5xjumper), silkscreen printing: 
+; "TEST" - FR5739 pin19 = TEST 
+; "RST"  - FR5739 pin20 = RST  
+; "RXD"  - FR5739 pin22 = P2.1 == UCA0RXD --> UCA0RXDBUF
+; "TXD"  - FR5739 pin21 = P2.0 == UCA0TXD <-- UCA0TXDBUf
+; "VCC"  - + upper side 
+
+; 8x blue LEDs in a row.   (portpinX->---resistor---LED---GND) 
+; PJ.0 - LED1 
+; PJ.1 - LED2 
+; PJ.2 - LED3 
+; PJ.3 - LED4 
+; P3.4 - LED5 
+; P3.5 - LED6 
+; P3.6 - LED7 
+; P3.7 - LED8 
+;
+; I/O pins on SV1: 
+; P1.0 - SV1.1  
+; P1.1 - SV1.2  
+; P1.2 - SV1.3  
+; P3.0 - SV1.4  
+; P3.1 - SV1.5  
+; P3.2 - SV1.6  
+; P3.3 - SV1.7  
+; P1.3 - SV1.8  
+; P1.4 - SV1.9  
+; P1.5 - SV1.10 
+; P4.0 - SV1.11 
+; GND  - SV1.12 
+
+; I/O pins on SV2: 
+; P1.7 - SV1.1  
+; P1.6 - SV1.2  
+; P3.7 - SV1.3  
+; P3.6 - SV1.4  
+; P3.5 - SV1.5  
+; P3.4 - SV1.6  
+; P2.2 - SV1.7  
+; P2.1 - SV1.8  
+; P2.6 - SV1.9  
+; P2.5 - SV1.10 
+; P2.0 - SV1.11 
+; VCC  - SV1.12 
+
+; Accelerometer: 
+; P2.7 - VS 
+; P3.0 - XOUT 
+; P3.1 - YOUT 
+; P3.2 - ZOUT 
+
+; LDR and NTC: 
+; P2.7 - VS 
+; P3.3 - LDR 
+; P1.4 - NTC
+
+; switch-keys:
+; P4.0 - S1 
+; P4.1 - S2 
+; RES - reset 
+
+; Clocks:
+; 8 MHz DCO intern
+
+; RF1,2,3 --> see TI document slau343.pdf 
+
+; ----------------------------------------------------------------------
+; CamelForth RAM memory map:
+;   UP          User Pointer, 2 bytes
+;   UAREA       User area, 32 bytes
+;   UAREA+20h   HOLD area, 40 bytes, grows down from end
+;   UAREA+48h   PAD buffer, 88 bytes, must follow HOLD area
+;   UAREA+A0h   Parameter stack, 128 B, grows down from end
+;   UAREA+120h  Return stack, 128 B, grows down from end
+;   UAREA+1A0h  TIB Terminal Input Buffer, 88 bytes
+
+; Note all must be word-aligned.
+; See also the definitions of U0, S0, and R0 in the "system variables &
+; constants" area.  A task w/o terminal input requires 200h bytes.
+; Double all except TIB and PAD for 32-bit CPUs.
+
+
+; RAM map
+; name     celles  comment
+                   ; -----
+UAREA_SIZE  = 16   ; UAREA 32 bytes
+                   ; -----
+                   ; | LSTACK: leave stack 
+                   ; | grows up 
+                   ; | 
+                   ; V
+                   ;   128 bytes
+                   ; ^
+                   ; |
+                   ; | grows down
+PSTACK_SIZE = 54   ; | PSTACK: top of parameter stack area. 
+                   ; -----
+                   ;   128 bytes
+                   ; ^
+                   ; |
+                   ; | grows down
+RSTACK_SIZE = 54   ; | RSTACK: top of return stack area. 
+
+;          aligned buffers only required for terminal tasks.
+; names    bytes  
+                   ; ^
+                   ; |
+                   ; | grows down
+HOLD_SIZE   = 34   ; | HOLDAREA: 
+                   ; -----
+PAD_SIZE    = 84   ; scratch pad
+                   ; -----
+TIB_SIZE    = 84   ; terminal input buffer
+                   ; -----
+
+;        PUBLIC  UP,UAREA,PADAREA,LSTACK,PSTACK,RSTACK
+        PUBLIC  PADAREA,LSTACK,PSTACK,RSTACK,rtest
+        PUBLIC  TIBAREA,ROMDICT ;VECAREA
+        PUBLIC  TIB_SIZE,UAREA_SIZE ;VECS_SIZE ;HOLDAREA
+        EXTERN  lastword
+        
+          RSEG    DATA16_N  ; uninitialized RAM segment
+
+; UP:       DS16  1           ; User Pointer
+; UAREA:    DS16  UAREA_SIZE  ; allocate user area. see: hilvl tabel for COLD
+;          DS16  2  ; sicherheitzone
+
+rtest:    DS16  1
+LSTACK:                     ; start leave stack
+          DS16  PSTACK_SIZE ; allocate parameter stack
+PSTACK:                     ; top of parameter stack
+          DS16  RSTACK_SIZE ; allocate return stack 
+RSTACK:                     ; top of return stack 
+          DS8   HOLD_SIZE   ; allocate hold area 
+HOLDAREA:                   ; top of hold adrea 
+PADAREA:  DS8   PAD_SIZE    ; start scratch pad; must follow HOLDAREA
+TIBAREA:  DS8   TIB_SIZE    ; start Terminal Input Buffer
+
+; ROMDICT moved to end of forth definitions, past lastword. See: core
+
+; ----------------------------------------------------------------------
+; POWER ON RESET AND INITIALIZATION
+
+#include "msp430fr5739.h"                     ; #define controlled include file
+#include "CF430FRforth.h"                      ; header macros and register defs
+
+;        NAME    reset        ; module name
+        PUBLIC  reset,main    ; make name visible outside this module
+
+        EXTERN  COLDIP,WARMIP,BOOTIP,cory,UAREA,UP
+
+        RSEG    CODE          ; place program in 'CODE' segment
+
+; ----------------------------------------------------------------------
+; MSP430FR5739 Initialize system (original: FR_EXP.lst)
+; for MSP-EXP430FR5739 Experimenter's Board 
+
+
+main:             ; Debugger requires the 'main' symbol. 
+reset:            ; forth requires the reset symbol.
+start_init:       ; I require the start_init symbol. ;-)
+
+; WDTCTL = WDTPW + WDTHOLD;                 // Stop WDT  
+    MOV.W   #0x5a80, &0x15c
+    
+; Save system reset interrupt vector to forth user variable 'cor'.
+    MOV.W   &SYSRSTIV, &cory  
+;    MOV.W   &cory,&SYSRSTIV   ; reset al pending interrupts ??
+
+; DCOCLK: Internal digitally controlled oscillator (DCO). 
+; Startup clock system in max. DCO setting ~8MHz 
+; This value is closer to 10MHz on untrimmed parts  
+; CSCTL0_H = 0xA5;                          // Unlock register
+    MOV.B   #0xa5, &0x161
+; CSCTL1 |= DCOFSEL0 + DCOFSEL1;            // Set max. DCO setting
+    BIS.W   #0x6, &0x162
+; CSCTL2 = SELA_1 + SELS_3 + SELM_3;        // set ACLK = vlo; MCLK = DCO
+    MOV.W   #0x133, &0x164
+; CSCTL3 = DIVA_0 + DIVS_0 + DIVM_0;        // set all dividers 
+    MOV.W   #0x0, &0x166
+; CSCTL0_H = 0x01;                          // Lock Register
+    MOV.B   #0x1, &0x161
+
+; Turn off temp. 
+; REFCTL0 |= REFTCOFF; 
+    BIS.W   #0x8, &0x1b0
+; REFCTL0 &= ~REFON;  
+    BIC.W   #0x1, &0x1b0
+
+; Enable switches
+; P4.0 and P4.1 are configured as switches
+; Port 4 has only two pins    
+; P4OUT |= BIT0 +BIT1;                      // Configure pullup resistor  
+    MOV.B   #0x3, R14
+    BIS.B   R14, &0x223
+; P4DIR &= ~(BIT0 + BIT1);                  // Direction = input
+    AND.B   #0xfc, &0x225
+; P4REN |= BIT0 + BIT1;                     // Enable pullup resistor
+    BIS.B   R14, &0x227
+; P4IES &= ~(BIT0+BIT1);                    // P4.0 Lo/Hi edge interrupt  
+    AND.B   #0xfc, &0x239
+; P4IE = BIT0+BIT1;                         // P4.0 interrupt enabled
+    MOV.B   R14, &0x23b
+; P4IFG = 0;                                // P4 IFG cleared
+    MOV.B   #0x0, &0x23d
+
+; Enable LEDs
+; P3OUT &= ~(BIT6+BIT7+BIT5+BIT4);
+    AND.B   #0xf, &0x222
+; P3DIR |= BIT6+BIT7+BIT5+BIT4;
+    BIS.B   #0xf0, &0x224
+; PJOUT &= ~(BIT0+BIT1+BIT2+BIT3);
+    AND.W   #0xfff0, &0x322
+; PJDIR |= BIT0 +BIT1+BIT2+BIT3;
+    BIS.W   #0xf, &0x324
+
+; Terminate Unused GPIOs
+; P1.0 - P1.6 is unused
+; P1OUT &= ~(BIT0 + BIT1 + BIT2 + BIT3 + BIT5 + BIT6 + BIT7);   
+    AND.B   #0x10, &0x202
+; P1DIR &= ~(BIT0 + BIT1 + BIT2 + BIT3 + BIT5 + BIT6 + BIT7); 
+    AND.B   #0x10, &0x204
+; P1REN |= (BIT0 + BIT1 + BIT2 + BIT3 + BIT5 + BIT6 + BIT7);   
+    BIS.B   #0xef, &0x206
+; P1.4 is used as input from NTC voltage divider
+; Set it to output low
+; P1OUT &= ~BIT4;      
+    BIC.B   #0x10, &0x202
+; P1DIR |= BIT4; 
+    BIS.B   #0x10, &0x204
+; P2.2 - P2.6 is unused
+; P2OUT &= ~(BIT2 + BIT3 + BIT4 + BIT5 + BIT6);    
+    AND.B   #0x83, &0x203
+; P2DIR &= ~(BIT2 + BIT3 + BIT4 + BIT5 + BIT6); 
+    AND.B   #0x83, &0x205
+; P2REN |= (BIT2 + BIT3 + BIT4 + BIT5 + BIT6);   
+    BIS.B   #0x7c, &0x207
+
+; Configure UART pins P2.0 (UCA0TXD) & P2.1 (UCA0RXD)
+    BIS.B   #0x03, &0x20d  ; P2SEL1 |= BIT0 + BIT1; 
+    AND.B   #0xfc, &0x20b  ; P2SEL0 &= ~(BIT0 + BIT1); 
+
+;  Configure UART 0 (Dirk Bruehl) 
+    BIS.B   #0x01, &0x5c0    ; UCA0CTL1 |= UCSWRST 
+    MOV.B   #0x80, &0x5c0    ; UCA0CTL1  = UCSSEL_2  // Set SMCLK as UCLk 
+    MOV.B   #0x34, &0x5c6    ; UCA0BR0   = 52        // 9600 baud
+        ; 8000000/(9600*16) - INT(8000000/(9600*16))=0.083
+    MOV.B   #0x0, &0x5c7     ; UCA0BR1 = 0 
+        ; UCBRFx = 1, UCBRSx = 0x49, UCOS16 = 1 (Refer User Guide)
+    MOV.W   #0x4911, &0x5c8  ; UCA0MCTLW = 0x4911 
+    BIC.B   #0x01, &0x5c0    ; UCA0CTL1 &= ~UCSWRST  // release from reset
+
+; P2.7 is used to power the voltage divider for the NTC thermistor
+; P2OUT &= ~BIT7;     
+    BIC.B   #0x80, &0x203
+; P2DIR |= BIT7; 
+    BIS.B   #0x80, &0x205
+
+; P3.0,P3.1 and P3.2 are accelerometer inputs
+; P3OUT &= ~(BIT0 + BIT1 + BIT2);   
+    AND.B   #0xf8, &0x222
+; P3DIR &= ~(BIT0 + BIT1 + BIT2); 
+    AND.B   #0xf8, &0x224
+; P3REN |= BIT0 + BIT1 + BIT2;
+    BIS.B   #0x7, &0x226
+
+; PJ.0,1,2,3 are used as LEDs
+; crystal pins for XT1 are unused
+; PJOUT &= ~(BIT4+BIT5);  
+    AND.W   #0xffcf, &0x322
+; PJDIR &= ~(BIT4+BIT5);
+    AND.W   #0xffcf, &0x324
+; PJREN |= BIT4 + BIT5;  
+    BIS.W   #0x30, &0x326
+    
+; Forth register initialisation
+    MOV     #RSTACK,SP              ; set up return stack
+    MOV     #PSTACK,PSP             ; set up parameter stack
+    MOV     #UAREA,&UP              ; initial user pointer
+    MOV     #WARMIP,IP              ; set IP of starting word 
+    MOV     #0,TOS                  ; clear top of pstack
+    NEXT
+    
+init_end:
+
+; ----------------------------------------------------------------------
+; DEFAULT INTERRUPT HANDLER
+         PUBLIC nullirq
+isr_start:
+nullirq: RETI
+isr_end:
+
+ROMDICT:
+        END

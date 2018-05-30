@@ -1,0 +1,127 @@
+; MSP-EXP430FR5739 FRAM Experimentation board
+
+ /************************************************************
+; defered words ============================================
+
+;A DEFER    <name> --     defer a definition
+;   CREATE ['] NOOP , DOES> @ EXECUTE ;
+        HEADER DEFER,5,'DEFER',DOCOLON
+        DW CREATE,lit,NOOP,COMMA
+        DW XDOES
+        MOV #dodoes,PC      ; long direct jump to DODOES - see: MARKER
+        DW FETCH,EXECUTE
+        DW EXIT
+
+;A IS       xt <deferedword> --   xt is the action of a deferd word
+;   ' >BODY ! ;
+        HEADER IS,2,'IS',DOCOLON
+        DW TICK,TOBODY,STORE
+        DW EXIT    
+
+;A [IS]      <name> xt --  
+;   ' >body postpone Literal  postpone ! ; immediate
+        IMMED BRACIS,4,'[IS]',DOCOLON
+        DW TICK,TOBODY,LITERAL
+        DW lit,STORE,COMMAXT
+        DW EXIT    
+
+; Version for contiguous address space like SRAM and FRAM (Z80 Model)
+; needs testing. 
+; seems to be ok for simple forth words in root voc; mk2012-01-13 
+;X MARKER   --      create word to restore dictionary
+;   LATEST @ 
+;   HERE 
+;   CREATE , ,       --             save dp, latest
+;   DOES>            -- adr 
+;   DUP   @ DP !                    restore latest  
+;   CELL +  @ LATEST !  ;           restore dp 
+    HEADER  MARKER,6,'MARKER',DOCOLON
+        DW LATEST,FETCH
+        DW HERE
+        DW CREATE,COMMA,COMMA
+        DW XDOES
+        MOV #dodoes,PC      ; long direct jump to DODOES
+        DW DUP
+        DW FETCH,DDP,STORE
+        DW CELL,PLUS
+        DW FETCH,LATEST,STORE
+        DW EXIT
+
+************************************************************/
+
+
+
+; use blue LEDs to do some light show =======================
+
+; 8x blue LEDs in a row.   (portpinX->---resistor---LED---GND) 
+
+; LED1 - PJ.0    LED5 - P3.4
+; LED2 - PJ.1    LED6 - P3.5
+; LED3 - PJ.2    LED7 - P3.6
+; LED4 - PJ.3    LED8 - P3.7
+
+;A !LEDS      c --        set blue LEDS 
+        HEADER  STORELEDS,5,'!LEDS',DOCODE 
+        BIC     #0x000F,&PJOUT ; LED1..4 off 
+        BIC.B   #0x00F0,&P3OUT ; LED5..8 off 
+        MOV     TOS,X          ; X = scratch register R10
+        AND     #0x000F,X      ; don't change any but LEDs lower nible
+        BIS     X,&PJOUT       ; set the LED bits
+        MOV     TOS,X          ; X = scratch register R10
+        AND     #0x00F0,X      ; don't change any but LEDs higher nible
+        BIS.B   X,&P3OUT       ; set the LED bits
+        MOV     @PSP+,TOS      ; do_drop 
+        NEXT
+
+;A CLIP   adr n --      run clip once
+;  COUNT OVER + SWAP DO I C@ !LEDS 50 MS LOOP ;
+    HEADER CLIP,4,'CLIP',DOCOLON
+        DW OVER,PLUS,SWAP
+        DW xdo
+clip1:  DW II,CFETCH,STORELEDS,lit,50,MS
+        DW xloop
+        DEST clip1
+        DW EXIT
+
+; some LED clips:
+;A MAGIC    -- adr         adr of clip1
+    HEADER XMAGIC,5,'MAGIC',DOCON
+        DW magic0
+magic0: DB magicend-magicstart    ; # of bytes in clip
+magicstart:
+        DB 24,36,66,129
+        DB 129,66,36,24
+magicend:
+        EVEN
+
+;A SMAL    -- adr         adr of clip2
+    HEADER XSMAL,4,'SMAL',DOCON
+        DW SMAL0  
+SMAL0:  DB SMALend-SMALstart    ; # of bytes in clip
+SMALstart:  
+        DB 24,36
+;        DB 24,36
+;        DB 24,36
+        DB 24
+SMALend:  
+        EVEN
+
+PUBLIC runmagic,runsmal   ; run some clip
+     HEADER runmagic,8,'runmagic',DOCOLON
+        DW XMAGIC,COUNT,CLIP,EXIT
+     HEADER runsmal,7,'runsmal',DOCOLON
+        DW XSMAL,COUNT,CLIP,EXIT
+
+; ---
+; Laufzeitteste
+
+EXTERN rtest,ftest
+     HEADER sram,4,'sram',DOCODE
+        MOV TOS,&rtest
+        NEXT
+
+     HEADER fram,4,'fram',DOCODE
+        MOV TOS,&ftest
+        NEXT
+        
+; finis 

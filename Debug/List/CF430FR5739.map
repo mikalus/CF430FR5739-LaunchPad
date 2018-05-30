@@ -1,0 +1,593 @@
+################################################################################
+#                                                                              #
+#      IAR Universal Linker V6.4.3.84                                          #
+#                                                                              #
+#           Link time     =  31/May/2018  01:38:27                             #
+#           Target CPU    =  MSP430                                            #
+#           List file     =  C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchP #
+#                            ad\Debug\List\CF430FR5739.map                     #
+#           Output file 1 =  C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchP #
+#                            ad\Debug\Exe\CF430FR5739.a43                      #
+#                            Format: intel-extended                            #
+#           Command line  =  C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchP #
+#                            ad\Debug\Obj\core430FR.r43                        #
+#                            C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchP #
+#                            ad\Debug\Obj\infoB.r43                            #
+#                            C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchP #
+#                            ad\Debug\Obj\init430FR5739.r43                    #
+#                            C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchP #
+#                            ad\Debug\Obj\vecs430FR5739.r43                    #
+#                            -o                                                #
+#                            C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchP #
+#                            ad\Debug\Exe\CF430FR5739.a43                      #
+#                            -Fintel-extended -l                               #
+#                            C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchP #
+#                            ad\Debug\List\CF430FR5739.map                     #
+#                            -xms                                              #
+#                            "-IC:\Program Files (x86)\IAR Systems\Embedded Wo #
+#                            rkbench 7.3\430\LIB\"                             #
+#                            -f                                                #
+#                            C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchP #
+#                            ad\lnk430fr5739.xcl                               #
+#                            (-D_STACK_SIZE=80 -D_DATA16_HEAP_SIZE=80          #
+#                            -cmsp430 -QCODE_I=CODE_ID                         #
+#                            -Z(DATA)DATA16_I,DATA16_Z,DATA16_N,DATA16_HEAP,D_ #
+#                            DATA16_HEAP_SIZE=1C00-1FFF                        #
+#                            -Z(DATA)CODE_I -Z(DATA)CSTACK+_STACK_SIZE#        #
+#                            -Z(CONST)DATA16_C,DATA16_ID,DIFUNCT,CHECKSUM=C200 #
+#                            -FF7F                                             #
+#                            -Z(CONST)INFOA=1880-18FF                          #
+#                            -Z(CONST)INFOB=1800-187F                          #
+#                            -Z(CODE)CSTART,ISR_CODE,CODE_ID,CODE=C200-FF7F    #
+#                            -Z(CODE)INTVEC=FF80-FFFF                          #
+#                            -Z(CODE)RESET=FFFE-FFFF) -f                       #
+#                            "C:\Program Files (x86)\IAR Systems\Embedded Work #
+#                            bench 7.3\430\config\linker\multiplier32.xcl"     #
+#                            (-e?Mul8Hw=?Mul8 -e?Mul16Hw=?Mul16                #
+#                            -e?Mul16to32uHw=?Mul16to32u                       #
+#                            -e?Mul16to32sHw=?Mul16to32s -e?Mul32Hw32=?Mul32   #
+#                            -e?Mul64Hw32=_Mul64i                              #
+#                            -e?Mul32u32uto64iHw32=_Mul32u32uto64i             #
+#                            -e?Mul32fHw32=_Mul32f                             #
+#                            -e_Mul64fHw32Ptr=_Mul64fPtr)                      #
+#                                                                              #
+#                           Copyright (C) 1987-2016 IAR Systems AB.            #
+################################################################################
+
+
+
+
+
+                ****************************************
+                *                                      *
+                *           CROSS REFERENCE            *
+                *                                      *
+                ****************************************
+
+                  There are no program entries.
+
+
+                ****************************************
+                *                                      *
+                *    AUTOMATIC SYMBOL REDIRECTIONS     *
+                *                                      *
+                ****************************************
+
+                  There are no automatic symbol redirections.
+
+
+
+                ****************************************
+                *                                      *
+                *              MODULE MAP              *
+                *                                      *
+                ****************************************
+
+
+  DEFINED ABSOLUTE ENTRIES
+    *************************************************************************
+
+  DEFINED ABSOLUTE ENTRIES
+  PROGRAM MODULE, NAME : ?ABS_ENTRY_MOD
+
+Absolute parts
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           _DATA16_HEAP_SIZE       0080 
+           _STACK_SIZE             0080 
+    *************************************************************************
+
+  FILE NAME : C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\Debug\Obj\core430FR.r43
+  PROGRAM MODULE, NAME : core430FR
+
+Absolute parts
+           LOCAL                   ADDRESS         
+           =====                   =======         
+           __MSP430G2211__         0000 
+  SEGMENTS IN THE MODULE
+  ======================
+CODE
+  Relative segment, address: C200 - DA43 (0x1844 bytes), align: 1
+  Segment part 0. ROOT 
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           EXECUTE                 C20C 
+           lit                     C21C 
+           EXIT                    C232 
+           DOCOLON                 C23A 
+           VARIABLE                C24E 
+           docreate                C258 
+           DOVAR                   C258 
+           CONSTANT                C270 
+           DOCON                   C278 
+           DOROM                   C284 
+           USER                    C298 
+           DOUSER                  C2A0 
+           DOALIAS                 C2B0 
+           dodoes                  C2B4 
+           DUP                     C2D0 
+           QDUP                    C2E4 
+           DROP                    C2F6 
+           SWAP                    C306 
+           OVER                    C31C 
+           ROT                     C334 
+           NIP                     C350 
+           TOR                     C35E 
+           RFROM                   C36E 
+           RFETCH                  C382 
+           SPFETCH                 C398 
+           SPSTORE                 C3AE 
+           RPFETCH                 C3C0 
+           RPSTORE                 C3D6 
+           TUCK                    C3E8 
+           FETCH                   C3F6 
+           STORE                   C404 
+           CFETCH                  C416 
+           CSTORE                  C424 
+           PLUS                    C438 
+           PLUSSTORE               C446 
+           MPLUS                   C458 
+           MINUS                   C46E 
+           ANDD                    C482 
+           ORR                     C490 
+           XORR                    C4A0 
+           INVERT                  C4B2 
+           NEGATE                  C4C4 
+           ONEPLUS                 C4D4 
+           ONEMINUS                C4E2 
+           SWAPBYTES               C4F0 
+           TWOSTAR                 C4FE 
+           TWOSLASH                C50C 
+           LSHIFT                  C51E 
+           RSHIFT                  C53E 
+           ZEROEQUAL               C55C 
+           ZEROLESS                C56C 
+           EQUAL                   C57E 
+           NOTEQUAL                C592 
+           LESS                    C5A0 
+           GREATER                 C5B4 
+           ULESS                   C5C2 
+           UGREATER                C5D2 
+           bran                    C5E4 
+           qbran                   C5F8 
+           xdo                     C60E 
+           xloop                   C634 
+           xplusloop               C654 
+           II                      C670 
+           JJ                      C686 
+           UNLOOP                  C6A2 
+           UMSTAR                  C6B4 
+           UMSLASHMOD              C6E4 
+           FILL                    C71E 
+           CMOVE                   C742 
+           CMOVEUP                 C766 
+           SKIP                    C78E 
+           SCAN                    C7B4 
+           SEQUAL                  C7D8 
+           NEQUAL                  C800 
+           EMIT                    C80A 
+           donoop                  C836 
+           KEY                     C824 
+           KEYQ                    C842 
+           ALIGNN                  C85C 
+           ALIGNED                 C876 
+           CELL                    C88C 
+           CELLPLUS                C89A 
+           CELLS                   C8AA 
+           CHARPLUS                C8B6 
+           CHARS                   C8C2 
+           TOBODY                  C8CE 
+           COMMAXT                 C8DC 
+           STORECF                 C8E8 
+           COMMACF                 C8F4 
+           COMMACALL               C90C 
+           COMMAJMP                C920 
+           STORCOLON               C936 
+           CEXIT                   C950 
+           COMMABRANCH             C966 
+           COMMADEST               C974 
+           STOREDEST               C988 
+           COMMANONE               C99E 
+           U0                      C9AC 
+           TOIN                    C9B8 
+           BASE                    C9C4 
+           STATE                   C9D2 
+           DDP                     C9DC 
+           TICKSOURCE              C9EC 
+           LATEST                  C9FA 
+           HP                      CA04 
+           LP                      CA0E 
+           APP                     CA1A 
+           NEWEST                  CA28 
+           FENCE                   CA36 
+           PAD                     CA42 
+           L0                      CA4C 
+           RZERO                   CA56 
+           S0                      CA60 
+           TIB                     CA6C 
+           TIBSIZE                 CA7C 
+           BLANK                   CA86 
+           NINIT                   CA94 
+           MEMTOP                  CAA2 
+           CORY                    CAAE 
+           STOD                    CABA 
+           QNEGATE                 CACE 
+           ABBS                    CAE2 
+           DNEGATE                 CAF6 
+           QDNEGATE                CB14 
+           DABS                    CB28 
+           MSTAR                   CB36 
+           SMSLASHREM              CB58 
+           FMSLASHMOD              CB86 
+           STAR                    CBB2 
+           SLASHMOD                CBC2 
+           SLASH                   CBD4 
+           MODD                    CBE4 
+           SSMOD                   CBF6 
+           STARSLASH               CC08 
+           MAX                     CC18 
+           MIN                     CC30 
+           TWOFETCH                CC46 
+           TWOSTORE                CC5A 
+           TWODROP                 CC72 
+           TWODUP                  CC82 
+           TWOSWAP                 CC94 
+           TWOOVER                 CCAA 
+           COUNT                   CCC4 
+           CR                      CCD6 
+           SPACE                   CCF0 
+           SPACES                  CD02 
+           UMIN                    CD1E 
+           UMAX                    CD36 
+           ACCEPT                  CD50 
+           TYPE                    CDB0 
+           XSQUOTE                 CDDA 
+           SQUOTE                  CDF0 
+           DOTQUOTE                CE0E 
+           UDSLASHMOD              CE24 
+           UDSTAR                  CE44 
+           HOLD                    CE62 
+           LESSNUM                 CE7A 
+           TODIGIT                 CE8E 
+           NUM                     CEAE 
+           NUMS                    CEC4 
+           NUMGREATER              CEDA 
+           SIGN                    CEF2 
+           UDOT                    CF08 
+           DOT                     CF20 
+           DECIMAL                 CF46 
+           HEX                     CF5A 
+           HERE                    CF6E 
+           ALLOT                   CF80 
+           COMMA                   CF8E 
+           CCOMMA                  CFA4 
+           SOURCE                  CFBE 
+           SLASHSTRING             CFD2 
+           TOCOUNTED               CFEE 
+           WORDD                   D004 
+           NFATOLFA                D056 
+           NFATOCFA                D06C 
+           IMMEDQ                  D086 
+           FINDNAME                D0A4 
+           FIND                    D0D2 
+           LITERAL                 D0FC 
+           DIGITQ                  D11A 
+           QSIGN                   D156 
+           TONUMBER                D18E 
+           QNUMBER                 D1CE 
+           INTERPRET               D214 
+           EVALUATE                D27E 
+           QUIT                    D2A8 
+           ABORT                   D2F6 
+           QABORT                  D308 
+           ABORTQUOTE              D322 
+           TICK                    D334 
+           CHARR                   D34E 
+           BRACCHAR                D364 
+           LPAREN                  D378 
+           HEADR                   D38E 
+           BUILDS                  D3BE 
+           CREATE                  D3D4 
+           XDOES                   D3EC 
+           DOES                    D404 
+           RECURSE                 D420 
+           LEFTBRACKET             D432 
+           RIGHTBRACKET            D444 
+           HIDE                    D458 
+           REVEAL                  D478 
+           IMMEDIATE               D492 
+           COLON                   D4A8 
+           SEMICOLON               D4BA 
+           BRACTICK                D4CC 
+           POSTPONE                D4E6 
+           IFF                     D51A 
+           THEN                    D530 
+           ELSS                    D542 
+           BEGIN                   D55E 
+           UNTIL                   D56E 
+           AGAIN                   D584 
+           WHILE                   D59A 
+           REPEAT                  D5AC 
+           TOL                     D5BA 
+           LFROM                   D5D0 
+           DO                      D5E8 
+           ENDLOOP                 D606 
+           LOO                     D624 
+           PLUSLOOP                D638 
+           LEAV                    D64C 
+           WITHIN                  D66C 
+           MOVE                    D684 
+           DEPTH                   D6B0 
+           ENVIRONMENTQ            D6CE 
+           ONEMS                   D6E0 
+           MS                      D706 
+           BELL                    D71E 
+           TRUE                    D730 
+           FALSE                   D73E 
+           NOOP                    D74A 
+           WORDS                   D758 
+           UDOTR                   D786 
+           DUMP                    D7AE 
+           DOTS                    D81A 
+           BACKSLASH               D860 
+           MEM                     D874 
+           FORGET                  D898 
+           PROTECT                 D8DE 
+           dcn                     D920 
+           DOTVER                  D92C 
+           COLD                    D942 
+           WARM                    D958 
+           COLDIP                  D944 
+           WARMIP                  D95A            Segment part 1 (init430FR5739)
+           STORELEDS               D974 
+           CLIP                    D9A4 
+           XMAGIC                  D9CA 
+           XSMAL                   D9E0 
+           runmagic                D9F4            Segment part 0 (infoB)
+           runsmal                 DA0A            Segment part 0 (infoB)
+           sram                    DA1C 
+           fram                    DA2E 
+           fenceadr                DA38            Segment part 0 (infoB)
+           TASK                    DA40 
+           lastword                DA3B            Segment part 0 (infoB)
+           LOCAL                   ADDRESS         
+           =====                   =======         
+           CF430FRstart            C200 
+           PUSHTOS                 C2D2 
+           NODUP                   C2EA 
+           LSH_X                   C52E 
+           LSH_1                   C528 
+           RSH_X                   C550 
+           RSH_1                   C548 
+           TOSTRUE                 C5A8 
+           TOSFALSE                C586 
+           dobran                  C5E6 
+           MPYU                    C6B8 
+           MACU                    C6BC 
+           L$002                   C6C0 
+           L$01                    C6C8 
+           DIVIDE                  C6EA 
+           DIV1                    C6F0 
+           DIV2                    C6F6 
+           DIV4                    C70C 
+           DIV3                    C70A 
+           FILL_X                  C732 
+           FILL_1                  C728 
+           CMOVE_X                 C756 
+           CMOVE_1                 C74C 
+           CMOVU_X                 C780 
+           CMOVU_1                 C774 
+           SKIP_X                  C7A2 
+           SKIP_1                  C798 
+           SCAN_X                  C7C8 
+           SCAN_1                  C7BE 
+           SEQU_X                  C7F6 
+           SEQU_1                  C7E2 
+           SMISMATCH               C7F0 
+           EMITLOOP                C80C 
+           KEYLOOP                 C826 
+           donext                  C836 
+           QNEG1                   CAD8 
+           DNEG1                   CB1E 
+           FMMOD1                  CBA6 
+           MAX1                    CC24 
+           MIN1                    CC3C 
+           SPCS1                   CD04 
+           SPCS2                   CD12 
+           UMIN1                   CD2A 
+           UMAX1                   CD42 
+           ACC1                    CD5A 
+           ACC5                    CD9E 
+           ACC3                    CD90 
+           ACC4                    CD9A 
+           TYP4                    CDCE 
+           TYP3                    CDC0 
+           TYP5                    CDD0 
+           NUMS1                   CEC6 
+           SIGN1                   CF00 
+           WORD1                   D028 
+           FIND1                   D0AA 
+           FIND2                   D0C2 
+           FIND3                   D0EE 
+           LITER1                  D10E 
+           QSIGN1                  D180 
+           TONUM1                  D190 
+           TONUM3                  D1C0 
+           TONUM2                  D1A6 
+           QNUM1                   D1F4 
+           QNUM3                   D204 
+           QNUM2                   D200 
+           INTER1                  D222 
+           INTER9                  D26E 
+           INTER4                  D250 
+           INTER2                  D24A 
+           INTER3                  D24C 
+           INTER8                  D26A 
+           INTER5                  D25C 
+           INTER6                  D26A 
+           QUIT1                   D2BC 
+           QUIT2                   D2E8 
+           QABO1                   D314 
+           POST1                   D510 
+           POST2                   D512 
+           LOOP1                   D60C 
+           LOOP2                   D61A 
+           MOVE1                   D6A0 
+           MOVE2                   D6A4 
+           onems1                  D6EC 
+           onems2                  D6F6 
+           ms1                     D70E 
+           WDS1                    D760 
+           LDUMP1                  D7B8 
+           LDUMP2                  D7D2 
+           LDUMP3                  D7F0 
+           DOTS2                   D858 
+           DOTS1                   D84A 
+           clip1                   D9AE 
+           magic0                  D9CE 
+           magicend                D9D7 
+           magicstart              D9CF 
+           SMAL0                   D9E4 
+           SMALend                 D9E8 
+           SMALstart               D9E5 
+           CF430FRend              DA44 
+
+    *************************************************************************
+
+  FILE NAME : C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\Debug\Obj\infoB.r43
+  PROGRAM MODULE, NAME : infoB
+
+  SEGMENTS IN THE MODULE
+  ======================
+INFOB
+  Relative segment, address: 1800 - 1875 (0x76 bytes), align: 1
+  Segment part 0. ROOT 
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           initDECON               1822            Segment part 0 (core430FR)
+           cory                    1842            Segment part 0 (core430FR)
+                                                   Segment part 1 (init430FR5739)
+           UAREA                   1802            Segment part 0 (core430FR)
+                                                   Segment part 1 (init430FR5739)
+           UP                      1800            Segment part 0 (core430FR)
+                                                   Segment part 1 (init430FR5739)
+           ftest                   1844            Segment part 0 (core430FR)
+           CFver                   1846            Segment part 0 (core430FR)
+           LOCAL                   ADDRESS         
+           =====                   =======         
+           appA                    1816 
+           appB                    1836 
+           CFverend                1876 
+
+    *************************************************************************
+
+  FILE NAME : C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\Debug\Obj\init430FR5739.r43
+  PROGRAM MODULE, NAME : init430FR5739
+
+Absolute parts
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           TIB_SIZE                0054            Segment part 0 (core430FR)
+           UAREA_SIZE              0010            Segment part 0 (core430FR)
+  SEGMENTS IN THE MODULE
+  ======================
+DATA16_N
+  Relative segment, address: 1C00 - 1DA3 (0x1a4 bytes), align: 1
+  Segment part 0. ROOT        Intra module refs:   Segment part 1
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           PADAREA                 1CFC            Segment part 0 (core430FR)
+           LSTACK                  1C02            Segment part 0 (core430FR)
+           PSTACK                  1C6E            Segment part 0 (core430FR)
+           RSTACK                  1CDA            Segment part 0 (core430FR)
+           rtest                   1C00            Segment part 0 (core430FR)
+           TIBAREA                 1D50            Segment part 0 (core430FR)
+           LOCAL                   ADDRESS         
+           =====                   =======         
+           HOLDAREA                1CFC 
+    -------------------------------------------------------------------------
+CODE
+  Relative segment, address: DA44 - DB4D (0x10a bytes), align: 1
+  Segment part 1. ROOT 
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           ROMDICT                 DB4E            Segment part 0 (infoB)
+           reset                   DA44            intvecs (vecs430FR5739)
+           main                    DA44 
+           nullirq                 DB4C            intvecs (vecs430FR5739)
+           LOCAL                   ADDRESS         
+           =====                   =======         
+           start_init              DA44 
+           init_end                DB4C 
+           isr_start               DB4C 
+           isr_end                 DB4E 
+
+    *************************************************************************
+
+  FILE NAME : C:\Users\mka\Documents\GitHub\CF430FR5739-LaunchPad\Debug\Obj\vecs430FR5739.r43
+  PROGRAM MODULE, NAME : vecs430FR5739
+
+  SEGMENTS IN THE MODULE
+  ======================
+INTVEC
+  Relative segment, address: FF80 - FFFF (0x80 bytes), align: 1
+  Segment part 0. ROOT 
+           ENTRY                   ADDRESS         REF BY
+           =====                   =======         ======
+           intvecs                 FF80            Segment part 0 (core430FR)
+
+
+
+
+                ****************************************
+                *                                      *
+                *      SEGMENTS IN ADDRESS ORDER       *
+                *                                      *
+                ****************************************
+
+
+SEGMENT              SPACE    START ADDRESS   END ADDRESS     SIZE  TYPE  ALIGN
+=======              =====    =============   ===========     ====  ====  =====
+INFOB                                  1800 - 1875              76   rel    1
+DATA16_Z                                  1C00                       dse    0
+DATA16_I                                  1C00                       dse    0
+DATA16_N                               1C00 - 1DA3             1A4   rel    1
+CSTART                                    C200                       dse    0
+ISR_CODE                                  C200                       dse    0
+CODE_ID                                   C200                       dse    0
+CODE                                   C200 - DB4D            194E   rel    1
+INTVEC                                 FF80 - FFFF              80   rel    1
+
+                ****************************************
+                *                                      *
+                *        END OF CROSS REFERENCE        *
+                *                                      *
+                ****************************************
+
+ 6 606 bytes of CODE  memory
+   420 bytes of DATA  memory
+   118 bytes of CONST memory
+
+Errors: none
+Warnings: none
+

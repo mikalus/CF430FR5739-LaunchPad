@@ -1,0 +1,51 @@
+; infoA user area tables
+
+        EXTERN  lastword,ROMDICT,fenceadr,NOOP
+        EXTERN  runmagic,runsmal
+        PUBLIC  initDECON,cory,UAREA,UP,ftest
+
+        RSEG    INFOB
+
+UP:     DW 0
+
+            ; user area 
+UAREA:  DW 0,0,16,0     ; reserved,>IN,BASE,STATE
+        DW ROMDICT      ; DP
+        DW 0,0          ; SOURCE init'd elsewhere
+        DW lastword     ; LATEST
+        DW 0,0          ; HP,LP init'd elsewhere; HP=Hold LP=leave stack pointer
+appA:   DW runsmal         ; default app for new FRAMed system ;mk
+        DW 0            ; NEWEST not init'd
+        DW fenceadr     ; FENCE for FORGET
+        DW 0,0,0        ; user variables TBD
+
+initDECON:  ; delivery condition of user area
+        DW 0,0,16,0     ; reserved,>IN,BASE,STATE
+        DW ROMDICT      ; DP
+        DW 0,0          ; SOURCE init'd elsewhere
+        DW lastword     ; LATEST
+        DW 0,0          ; HP,LP init'd elsewhere; HP=Hold LP=leave stack pointer
+appB:   DW runmagic         ; is default app ;mk
+        DW 0            ; NEWEST not init'd
+        DW fenceadr     ; FENCE for FORGET
+        DW 0,0,0        ; user variables TBD
+
+cory:   DW 0   ; cause of reset; its a copy of SYSRSTIV done by init.
+ftest:  DW 0
+
+
+
+; version string ===========================================
+
+        PUBLIC  CFver
+
+CFver:  DB CFverend-CFver
+        DB 'CF430FR V0.2exp'
+;        DB $0D,$0A
+;        DB 'CamelForth for MSP-EXP430FR5739'
+        DB $0D,$0A
+        DB 'build: ',__DATE__,' ',__TIME__
+        EVEN
+CFverend:   
+
+END

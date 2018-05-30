@@ -1,0 +1,60 @@
+\ Word scrambler based on random shuffle
+\ as a demo on MSP-EXP430FR5739 Experimenters Board
+\ using CamelForth (CF430FR V0.2)
+\ and terminal input.  
+
+
+
+VARIABLE seed
+
+BASE @ HEX 10450405 CONSTANT generator 
+BASE !
+
+: TIME&DATE  2012 1 14 0 33 57 ;
+
+: rnd  ( -- n )  seed @ generator UM* DROP 1+ DUP seed ! ;
+
+: random ( n -- 0..n-1 )  rnd UM* NIP ;  
+
+: init ( -- )
+    TIME&DATE  12 * + 31 * + 24 * + 60 * + 60 * +  seed !  ;  init
+
+: c>< ( c-addr1 c-addr2 -- ) \ character exchange
+    2DUP C@ ( c-addr1 c-addr2 c-addr-1 c2 )
+    SWAP C@ ( c-addr1 c-addr2 c2 c1 )
+    ROT C!  ( c-addr1 c2 ) 
+    SWAP C! ;
+
+: cshuffle ( c-addr n -- ) \ shuffle Durstenfeld/Knuth
+   BEGIN ?DUP WHILE ( c-addr i )
+      2DUP 1- CHARS + >R
+      2DUP random CHARS + R>  c>< 
+      1- 
+   REPEAT DROP ;
+
+: scramble-word2 ( c-addr len -- ) \ some case handling included.
+    DUP 4 < IF 2DROP EXIT THEN
+    DUP 4 = IF OVER CHAR+ DUP CHAR+ c><  2DROP EXIT THEN
+    2 - SWAP CHAR+ SWAP cshuffle ;
+
+: scramble ( <word> -- ) 
+    CR
+    BEGIN 
+       BL WORD COUNT
+       DUP 
+    WHILE ( c-addr len )
+       2DUP scramble-word2 TYPE SPACE
+    REPEAT 
+    2DROP ;
+
+
+
+\ To study random behavior, execute one of those lines serveral times:
+
+: xxx  ( -- )  0 10 do cr  i .  i random .   -1 +loop ;
+
+scramble   thirteen thirsty thrushes thrust thru a thick thicket
+
+scramble   sah ein knab ein roeslein stehen
+
+scramble   (.) (.O) (.:O) (.:=O) (.:=#O) (.:=#*O)

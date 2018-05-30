@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project>
+  <fileVersion>2</fileVersion>
+  <fileChecksum>1567673349</fileChecksum>
+  <configuration>
+    <name>Debug</name>
+    <outputs>
+      <file>$PROJ_DIR$\Debug\Obj\expapp.r43</file>
+      <file>$PROJ_DIR$\Debug\Obj\core430FR.r43</file>
+      <file>$PROJ_DIR$\infoB.s43</file>
+      <file>$PROJ_DIR$\init430FR5739.s43</file>
+      <file>$PROJ_DIR$\core430FR.s43</file>
+      <file>$PROJ_DIR$\vecs430FR5739.s43</file>
+      <file>$PROJ_DIR$\Debug\Exe\CF430FR5739.a43</file>
+      <file>$PROJ_DIR$\Debug\Obj\infoB.r43</file>
+      <file>$PROJ_DIR$\Debug\Obj\hilvl430FR.r43</file>
+      <file>$PROJ_DIR$\asm.s43</file>
+      <file>$PROJ_DIR$\Debug\Obj\asm.r43</file>
+      <file>$PROJ_DIR$\Debug\List\init430FR5739.lst</file>
+      <file>$PROJ_DIR$\Debug\List\vecs430FR5739.lst</file>
+      <file>$PROJ_DIR$\..\CF430FR\core430FR.s43</file>
+      <file>$PROJ_DIR$\Debug\Obj\init430FR5739.r43</file>
+      <file>$TOOLKIT_DIR$\config\linker\multiplier32.xcl</file>
+      <file>$PROJ_DIR$\lnk430fr5739.xcl</file>
+      <file>$PROJ_DIR$\Debug\Obj\vecs430FR5739.r43</file>
+      <file>$PROJ_DIR$\CF430FRforth.h</file>
+      <file>$PROJ_DIR$\deps430FR.s43</file>
+      <file>$PROJ_DIR$\hilvl430FR.s43</file>
+      <file>$PROJ_DIR$\expapp.s43</file>
+      <file>$PROJ_DIR$\Debug\List\core430FR.lst</file>
+      <file>$PROJ_DIR$\Debug\List\CF430FR5739.map</file>
+      <file>$TOOLKIT_DIR$\inc\msp430fr5739.h</file>
+      <file>$PROJ_DIR$\Debug\List\infoB.lst</file>
+      <file>$PROJ_DIR$\..\CF430FR\expapp.s43</file>
+      <file>$TOOLKIT_DIR$\inc\msp430.h</file>
+      <file>$PROJ_DIR$\..\CF430FR\deps430FR.s43</file>
+      <file>$PROJ_DIR$\..\CF430FR\hilvl430FR.s43</file>
+      <file>$PROJ_DIR$\..\CF430FR\infoB.s43</file>
+      <file>$PROJ_DIR$\..\CF430FR\init430FR5739.s43</file>
+      <file>$PROJ_DIR$\..\CF430FR\vecs430FR5739.s43</file>
+      <file>$PROJ_DIR$\Debug\Obj\deps430FR.r43</file>
+    </outputs>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>XLINK</name>
+          <file> 23 6</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\infoB.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 7 25</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\init430FR5739.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 14 11</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 24 18</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\core430FR.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 1 22</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>A430</name>
+          <file> 27 24 18 19 20 21</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\vecs430FR5739.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 17 12</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\Debug\Exe\CF430FR5739.a43</name>
+      <outputs>
+        <tool>
+          <name>XLINK</name>
+          <file> 23</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>XLINK</name>
+          <file> 16 15 1 7 14 17</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\asm.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 10</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\CF430FR\core430FR.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 1</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\CF430FR\expapp.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 0</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\CF430FR\deps430FR.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 33</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\CF430FR\hilvl430FR.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 8</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\CF430FR\infoB.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 7</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\CF430FR\init430FR5739.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 14</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\..\CF430FR\vecs430FR5739.s43</name>
+      <outputs>
+        <tool>
+          <name>A430</name>
+          <file> 17</file>
+        </tool>
+      </outputs>
+    </file>
+    <forcedrebuild>
+      <name>$PROJ_DIR$\asm.s43</name>
+      <tool>A430</tool>
+    </forcedrebuild>
+  </configuration>
+  <configuration>
+    <name>Release</name>
+    <outputs/>
+    <forcedrebuild>
+      <name>[MULTI_TOOL]</name>
+      <tool>XLINK</tool>
+    </forcedrebuild>
+  </configuration>
+</project>
+
+

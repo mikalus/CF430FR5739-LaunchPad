@@ -1,0 +1,31 @@
+\ Magic Eye Demo for those 8 blue LEDs 
+\ on MSP-EXP430FR5739 Experimenters Board
+\ using CamelForth (CF430FR V0.2)
+\ and terminal input for user interface. 
+
+
+DECIMAL
+
+\ -1 CONSTANT TRUE
+\  0 CONSTANT FALSE
+
+VARIABLE speed   200 speed !
+
+: ui ( char -- f )    \ user interface
+             DUP 119  \ w key winds up
+              = IF DROP -10 speed +! EXIT THEN  
+             DUP 115  \ s key slows down
+              = IF DROP  10 speed +! EXIT THEN  
+             DROP     \ other keys exit demo
+             0 !LEDS ABORT" stopped " ;  
+: adjust     KEY? IF KEY ui THEN ;
+: wait       speed @ 0 DO speed @ 0 DO LOOP adjust LOOP ;
+: nL         ( n -- ) !LEDS wait ;
+: thighten   129 nL  66 nL  36 nL 24 nL ;
+: expand     24 nL 36 nL 66 nL 129 nL ;
+: ledclip    expand thighten wait ;
+: init       24 nL ;
+: magic_eye  init BEGIN ledclip AGAIN ;  
+: demo  magic_eye ;
+
+\ finis
