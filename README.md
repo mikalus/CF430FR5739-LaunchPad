@@ -91,15 +91,16 @@ Then the project will be built. You should see number of errors and number of wa
 
 2. You can add your code to the assembler source files.  This requires you to convert your Forth code to assembler code.  To show how this is done, every high-level Forth word in the file is shown with its equivalent Forth code in a comment.  Be especially careful with control structures (IF..ELSE..THEN, BEGIN..UNTIL, DO..LOOP, and the like), and with the Forth word headers.  For this option it is recommended that you create a new .s43 assembler file, and INCLUDE it at the end of core430FR.s43. This is necessary to preserve the dictionary linking between your new definitions and the kernel definitions.  Reassemble core430FR.s43, and download to the MSP430 board, then test.  This is a much slower process, and is best saved for the final stage when you have a tested & debugged program that you want to put in FRAM.
 
---------------------------- LICENSE TERMS ------------------------------
-CamelForth for the Texas Instruments MSP430 
+--------------------------- 
+# LICENSE TERMS
+CamelForth for the Texas Instruments MSP430  
 (c) 2009 Bradford J. Rodriguez. 
 
 This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version. 
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU General Public License along with this program.  
+If not, see <http://www.gnu.org/licenses/>.
 
-Commercial inquiries should be directed to the author at 115 First St., #105, Collingwood, Ontario L9Y 4W3 Canada or via email to bj@camelforth.com 
-------------------------------------------------------------------------
+Commercial inquiries should be directed to the CamelForth author at 115 First St., #105, Collingwood, Ontario L9Y 4W3 Canada or via email to bj@camelforth.com 
